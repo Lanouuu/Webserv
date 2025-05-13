@@ -20,7 +20,7 @@ Server::~Server(void)
 
 
 /****************************************************************************/
-/*                           Getters / Server::Setters                      */
+/*                           Getters / Setters                              */
 /****************************************************************************/
 
 void    Server::setName(const std::string & name)

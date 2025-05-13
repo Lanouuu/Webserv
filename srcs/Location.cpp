@@ -36,7 +36,7 @@ Location &  Location::operator=(const Location & rhs)
 }
 
 /****************************************************************************/
-/*                           Getters / Server::Setters                      */
+/*                           Getters / Setters                              */
 /****************************************************************************/
 
 void    Location::setRoot(const std::string & root)

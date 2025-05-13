@@ -1,10 +1,10 @@
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
-#include <inttypes.h>
-#include <iostream>
-#include <map>
-#include "Location.hpp"
+# include <inttypes.h>
+# include <iostream>
+# include <map>
+# include "Location.hpp"
 
 typedef std::map<std::string, Location> location_map;
 
@@ -28,7 +28,7 @@ class   Server
         std::string     _serverRoot;
         std::string     _serverHost;
         std::string     _serverIndex;
-        uint16_t       _serverPort;
+        uint16_t        _serverPort;
         location_map    _serverLocations;
 
 };

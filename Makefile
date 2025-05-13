@@ -1,6 +1,6 @@
 NAME			=	webserv
 
-CFLAGS			=	-Wall -Wextra -Werror -I INCLUDES -std=c++98
+CFLAGS			=	-Wall -Wextra -Werror -I ${INC_PATH} -std=c++98
 
 CC				=	c++
 
@@ -23,7 +23,8 @@ SOURCES_PATH	=	./srcs/
 SOURCES_MAIN	= 	main.cpp \
 						Server.cpp \
 						Location.cpp \
-						conf_parsing.cpp
+						
+SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -34,6 +35,7 @@ SOURCES_MAIN	= 	main.cpp \
 OBJECTS_PATH	=	objs/
 
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -41,9 +43,12 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 #                                                                              #
 # **************************************************************************** #
 
-INCLUDES		=	srcs/Server.hpp \
-					srcs/Location.hpp \
-					srcs/parsing.hpp \
+INC_PATH		=	./includes/
+
+INCLUDES		=	${INC_PATH}Server.hpp \
+					${INC_PATH}Location.hpp \
+					${INC_PATH}parsing.hpp \
+					${INC_PATH}Lexer.hpp \
 
 # **************************************************************************** #
 #                                                                              #
