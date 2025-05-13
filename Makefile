@@ -1,6 +1,6 @@
 NAME			=	webserv
 
-CFLAGS			=	-Wall -Wextra -Werror -I INCLUDES -std=c++98
+CFLAGS			=	-Wall -Wextra -Werror -std=c++98 -I ${INCLUDES}
 
 CC				=	c++
 
@@ -19,6 +19,8 @@ END				=	\033[0m
 SOURCES_PATH	=	./srcs/
 
 SOURCES_MAIN	= 	main.cpp \
+
+SOURCES_PARSING_REQUEST	=	parsing_request/request.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -29,6 +31,7 @@ SOURCES_MAIN	= 	main.cpp \
 OBJECTS_PATH	=	objs/
 
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING_REQUEST:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -36,7 +39,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 #                                                                              #
 # **************************************************************************** #
 
-INCLUDES		=
+INCLUDES		= ${SOURCES_PATH}parsing_request/request.hpp
 
 # **************************************************************************** #
 #                                                                              #
