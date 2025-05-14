@@ -12,6 +12,7 @@ Location::Location(void)
 Location::Location(const Location & src)
 {
     *this = src;
+    return ;
 }
 
 Location::~Location(void)
@@ -42,16 +43,19 @@ Location &  Location::operator=(const Location & rhs)
 void    Location::setRoot(const std::string & root)
 {
     this->_locationRoot = root;
+    return ;
 }
 
 void    Location::setIndex(const std::string & index)
 {
     this->_locationIndex = index;
+    return ;
 }
 
 void    Location::setUpload(const std::string & path)
 {
     this->_locationUpload = path;
+    return ;
 }
 
 /****************************************************************************/
@@ -61,4 +65,5 @@ void    Location::setUpload(const std::string & path)
 void    Location::addMethod(const std::string & method)
 {
     this->_locationMethod.push_back(method);
+    return ;
 }

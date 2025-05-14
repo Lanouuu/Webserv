@@ -25,6 +25,7 @@ SOURCES_MAIN	= 	main.cpp \
 						Location.cpp \
 						
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
+					parsing/parsing_conf/Lexer.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -43,7 +44,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 #                                                                              #
 # **************************************************************************** #
 
-INC_PATH		=	./includes/
+INC_PATH		=	./include/
 
 INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Location.hpp \

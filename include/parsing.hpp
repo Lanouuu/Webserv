@@ -2,6 +2,7 @@
 # define PARSING_HPP
 
 # include "Server.hpp"
+# include "Lexer.hpp"
 
 typedef std::map<std::string, Server>   server_map;
 

@@ -21,6 +21,7 @@ class   Location
         void    addMethod(const std::string & method);
 
     private:
+    
         std::string                 _locationRoot;
         std::string                 _locationIndex;
         std::string                 _locationUpload;

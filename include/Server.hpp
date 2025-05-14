@@ -24,6 +24,7 @@ class   Server
         void    addLocation(const std::string & name, const Location & location);
 
     private:
+    
         std::string     _serverName;
         std::string     _serverRoot;
         std::string     _serverHost;
