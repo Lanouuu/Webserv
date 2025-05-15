@@ -123,8 +123,67 @@ int Request::parse_body_form() {
     }
     if (!key.empty())
         data[key] = value;
-    // _body_data = data;
+    _body_data = data;
     return 0;
+}
+
+void Request::decode_content() {
+    std::map<std::string, std::string> code;
+    code["+"] = " ";
+    code["%20"] = " ";
+    code["%21"] = "!";
+    code["%22"] = "\"";
+    code["%23"] = "#";
+    code["%24"] = "$";
+    code["%25"] = "%";
+    code["%26"] = "&";
+    code["%27"] = "'";
+    code["%28"] = "(";
+    code["%29"] = ")";
+    code["%2A"] = "*";
+    code["%2B"] = "+";
+    code["%2C"] = ",";
+    code["%2D"] = "-";
+    code["%2E"] = ".";
+    code["%2F"] = "/";
+    code["%3A"] = ":";
+    code["%3B"] = ";";
+    code["%3C"] = "<";
+    code["%3D"] = "=";
+    code["%3E"] = ">";
+    code["%3F"] = "?";
+    code["%40"] = "@";
+    code["%5B"] = "[";
+    code["%5C"] = "\\";
+    code["%5D"] = "]";
+    code["%5E"] = "^";
+    code["%5F"] = "_";
+    code["%60"] = "`";
+    code["%7B"] = "{";
+    code["%7C"] = "`";
+    code["%7D"] = "}";
+    code["%7E"] = "~";
+
+    std::string content = _body_data["Content"];
+    for (std::string::iterator it = content.begin(); it != content.end(); it++)
+    {
+        if (*it == '%')
+        {
+            std::string hexa_code = content.substr(it - content.begin(), 3);
+            std::map<std::string, std::string>::iterator  it_map = code.find(hexa_code);
+            if(it_map != _body_data.end())
+            {
+                content.erase(it - content.begin(), 2);
+                content.replace(it - content.begin(), 1, it_map->second);
+            }
+            else
+            {
+                std::cout << "Hexacode not found in map" << std::endl;
+            }
+        }
+    }
+    _body_data["Content"] = content;
+    std::cout << "body content = " << _body_data.find("Content")->second.c_str() << std::endl; 
 }
 
 int Request::parse_request(std::string const &req) {
@@ -161,12 +220,11 @@ int Request::parse_request(std::string const &req) {
         }
         if (word == "\r")
         {
-            std::cout << "ici" << std::endl;
             word.clear();
             set_body(req);
         }
     }
-
+    
     if(_methode == "POST")
     {
         if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
@@ -183,15 +241,84 @@ int Request::parse_request(std::string const &req) {
                 std::cout << "error in parse_body_form" << std::endl;
                 return 1;
             }
-            // std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
-            // std::ofstream new_file(_body_data.find("File+name")->second);
+            std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
+            std::ofstream new_file;
+            std::string filename = _body_data.find("File+name")->second.c_str();
+            std::ifstream test_open_file(filename.c_str());
+            if(test_open_file.is_open())
+            {
+                std::cout << "File name already exist, add suffix" << std::endl;
+                filename += "_";
+                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                {
+                    std::stringstream ss;
+                    ss << i;
+                    filename += ss.str();
+                    if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                    {
+                        size_t pos = filename.find_last_of('_');
+                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+            new_file.open(filename.c_str());
+            if(!new_file.is_open())
+            {
+                std::cout << "error creating new file" << std::endl;
+                return 1;
+            }
+            std::cout << "File = " << filename << std::endl;
+            decode_content();
+            new_file << _body_data.find("Content")->second.c_str();
+            new_file.close();
         }
-        if(_content_type == "text/plain\r")
+        else if(_content_type == "text/plain\r")
+        {
+            std::string filename = "upload.txt";
+            std::ofstream new_file;
+            std::ifstream test_open_file(filename.c_str());
+            if(test_open_file.is_open())
+            {
+                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                {
+                    std::ostringstream oss;
+                    oss << "upload_" << i << ".txt";
+                    filename = oss.str();
+    
+                    if (open(filename.c_str(), O_CREAT | O_EXCL | O_RDWR, 0644) == -1)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        break;
+                        //std::cerr << "Erreur d'ouverture du fichier\n";
+                    }
+                }
+            }
+            new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
+            if(!new_file.is_open())
+            {
+                std::cout << "error creating new file" << std::endl;
+                return 1;
+            }
+            std::cout << "upload file = " << filename.c_str() << std::endl;
+            new_file <<_body;
+            new_file.close();
+        }
+        else if(_content_type == "multipart/form-data")
         {
 
         }
         else
+        {
+            std::cout << "ici" << std::endl;
             return 1;
+        }
     }
     std::string response;
     response = create_response();
@@ -292,6 +419,7 @@ int Request::set_content_length(std::string const & line)
 
 int Request::set_body(std::string const & line)
 {
+    //a modifier car \0
     size_t pos = line.find("\r\n\r\n", 0);
     for (std::string::const_iterator it = line.begin() + pos + 4; it != line.end(); it++)
         _body += *it;

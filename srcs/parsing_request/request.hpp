@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <cstring>
 #include <map>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <limits>
 
 class Request {
     private:
@@ -49,6 +52,7 @@ class Request {
         int check_request_format_get(std::string const &req);
         int check_request_format_post(std::string const &req);
         int parse_body_form();
+        void    decode_content();
 
         std::string create_response();
 };

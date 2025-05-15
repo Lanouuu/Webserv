@@ -8,18 +8,18 @@ int main(int ac, char **av, char **env)
     (void)av;
     (void)ac;
 
-    std::string request_test = "POST srcs/images/must.png HTTP/1.1\r\n";
+    std::string request_test = "POST / HTTP/1.1\r\n";
     request_test += "Host: localhost:8080\r\n";
     request_test += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n";
     request_test += "Accept-Language: en-US,en;q=0.5\r\n";
     request_test += "Accept-Encoding: gzip, deflate, br, zstd\r\n";
-    request_test += "Content-Type: application/x-www-form-urlencoded\r\n";
+    request_test += "Content-Type: text/plain\r\n";
     request_test += "Content-Length: 42\r\n";
     request_test += "Connection: keep-alive\r\n";
     request_test += "\r\n";
 
     //body
-    request_test += "File+name=gfjnmfhynmjgy&Content=jnmyhtgdjm&date=22&heure=12\r\n";
+    request_test += "File+name=new_file&Content=Hello%20World%21&date=22&heure=12\r\n";
 
     Request request;
     if(request.parse_request(request_test) == 1)
