@@ -96,6 +96,7 @@ int Request::check_request_format_post(std::string const &req) {
     return 0;
 }
 
+//recuperer le body dans une map (file name = blabla)
 int Request::parse_body_form() {
     std::map<std::string, std::string> data;
     std::string key, value;
@@ -105,15 +106,15 @@ int Request::parse_body_form() {
         if(*it == '=')
         {
             a = 1;
-            it++;
+            continue;
         }
         if(*it == '&')
         {
             data[key] = value;
             key.clear();
             value.clear();
-            it++;
             a = 0;
+            continue;
         }
         if(a == 0)
             key += *it;
@@ -122,9 +123,7 @@ int Request::parse_body_form() {
     }
     if (!key.empty())
         data[key] = value;
-    std::map<std::string, std::string>::iterator it;
-    for (it = data.begin(); it != data.end(); ++it)
-        std::cout << it->first << " " << it->second << "\n";
+    // _body_data = data;
     return 0;
 }
 
@@ -180,7 +179,12 @@ int Request::parse_request(std::string const &req) {
         if(_content_type == "application/x-www-form-urlencoded\r")
         {
             if(parse_body_form() == 1)
+            {
+                std::cout << "error in parse_body_form" << std::endl;
                 return 1;
+            }
+            // std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
+            // std::ofstream new_file(_body_data.find("File+name")->second);
         }
         if(_content_type == "text/plain\r")
         {
@@ -188,7 +192,6 @@ int Request::parse_request(std::string const &req) {
         }
         else
             return 1;
-        // creation du fichier + parsing body
     }
     std::string response;
     response = create_response();

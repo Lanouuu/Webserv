@@ -20,6 +20,7 @@ class Request {
         std::string _body;
         std::string _content_type;
         std::string _content_length;
+        std::map<std::string, std::string> _body_data;
 
     public:
         Request();
@@ -34,7 +35,6 @@ class Request {
         std::string get_body();
         std::string get_content_type();
         std::string get_content_length();
-        std::string get_created_file_name();
 
         int set_methode(std::string const & line);
         int set_accept(std::string const & line);
