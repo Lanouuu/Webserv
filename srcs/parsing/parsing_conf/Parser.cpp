@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Parser::Parser(const std::string file) : Lexer(file)
+Parser::Parser(const std::string file) : Lexer(file), _fileName(file)
 {
     getValidBlocks();
     getServIdent();
@@ -57,15 +57,24 @@ void    Parser::getLocaIdent(void)
     return ;
 }
 
-void    tokenError(std::string & value, size_t line, size_t pos)
+std::string Parser::tokenError(std::string error, t_token & token)
 {
-    //std::string buf = "Error: " + value + itoa(line)
+    std::ostringstream buf;
+
+    buf << std::endl
+        << RED << "Error: " << END
+        << this->_fileName << ":" << token.line << ":" << token.pos
+        << RED << " error: " << END << error 
+        << std::endl
+        << token.line << " | " << token.value
+        << std::endl;
+    return (buf.str());
 }
 
-void    Parser::checkTokens(void) const
+void    Parser::checkTokens(void)
 {
     if (this->_tokens.begin()->value != "server")
-        throw   std::invalid_argument("Error: " + this->_tokens.begin()->value + ".conf:" +)
+        throw std::invalid_argument(tokenError("expected server block", *(this->_tokens.begin())));
 }
 
 void    Parser::confParser(server_map & servers)

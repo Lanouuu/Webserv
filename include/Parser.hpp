@@ -1,7 +1,12 @@
 #ifndef PARSER_HPP
 # define PARSER_HPP
 
+# define GREEN 	"\033[0;32m"
+# define RED	"\033[0;31m"
+# define END	"\033[0m"
+
 # include <set>
+# include <sstream>
 # include "Lexer.hpp"
 # include "Server.hpp"
 
@@ -18,15 +23,18 @@ class   Parser : public Lexer
         
     private:
 
+        std::string             _fileName;
+
         std::set<std::string>   _validBlocks;
         std::set<std::string>   _servIdentifiers;
         std::set<std::string>   _locaIdentifiers;
 
-        void    getValidBlocks(void);
-        void    getServIdent(void);
-        void    getLocaIdent(void);
+        void            getValidBlocks(void);
+        void            getServIdent(void);
+        void            getLocaIdent(void);
 
-        void    checkTokens(void) const;
+        void            checkTokens(void);
+        std::string     tokenError(std::string error, t_token & token);
 };
 
 #endif
