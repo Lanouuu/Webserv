@@ -126,14 +126,6 @@ void    Lexer::tokenizer(const std::string & line, size_t n_line)
     return ;
 }
 
-/*
-tokenizer 
-
-identifier (string) (bracket)
-identifier (string) (semicolon)
-
-*/
-
 void    Lexer::loadFile(const std::string & file)
 {
     std::ifstream               conf_file(file.c_str());

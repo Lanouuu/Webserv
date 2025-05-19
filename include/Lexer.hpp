@@ -33,7 +33,7 @@ class   Lexer
 
         void    printTokens(void) const;
 
-    private:
+    protected:
         
         std::vector<t_token>    _tokens;
         

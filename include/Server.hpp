@@ -2,7 +2,6 @@
 # define SERVER_HPP
 
 # include <inttypes.h>
-# include <iostream>
 # include <map>
 # include "Location.hpp"
 
@@ -12,8 +11,8 @@ class   Server
 {
     public:
 
-        Server();
-        ~Server();
+        Server(void);
+        ~Server(void);
 
         void    setName(const std::string & name);
         void    setRoot(const std::string & root);
@@ -31,7 +30,6 @@ class   Server
         std::string     _serverIndex;
         uint16_t        _serverPort;
         location_map    _serverLocations;
-
 };
 
 #endif

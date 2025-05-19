@@ -2,9 +2,7 @@
 # define PARSING_HPP
 
 # include "Server.hpp"
-# include "Lexer.hpp"
-
-typedef std::map<std::string, Server>   server_map;
+# include "Parser.hpp"
 
 void    parsingConfFile(std::string file, server_map & servers);
 

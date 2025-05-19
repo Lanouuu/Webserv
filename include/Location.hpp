@@ -3,14 +3,15 @@
 
 # include <iostream>
 # include <vector>
+# include <exception>
 
 class   Location
 {
     public:
 
-        Location();
+        Location(void);
         Location(const Location & src);
-        ~Location();
+        ~Location(void);
 
         Location &  operator=(const Location & rhs);
 

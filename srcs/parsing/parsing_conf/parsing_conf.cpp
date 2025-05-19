@@ -2,9 +2,9 @@
 
 void    parsingConfFile(std::string file, server_map & servers)
 {
-    Lexer   lexer(file);
-    (void)servers;
+    Parser   parser(file);
 
-    lexer.printTokens();
+    parser.printTokens();
+    parser.confParser(servers);
     return ;
 }

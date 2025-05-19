@@ -26,6 +26,7 @@ SOURCES_MAIN	= 	main.cpp \
 						
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 					parsing/parsing_conf/Lexer.cpp \
+					parsing/parsing_conf/Parser.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -50,6 +51,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Location.hpp \
 					${INC_PATH}parsing.hpp \
 					${INC_PATH}Lexer.hpp \
+					${INC_PATH}Parser.hpp \
 
 # **************************************************************************** #
 #                                                                              #
