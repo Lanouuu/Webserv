@@ -13,14 +13,27 @@ int main(int ac, char **av, char **env)
     request_test += "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n";
     request_test += "Accept-Language: en-US,en;q=0.5\r\n";
     request_test += "Accept-Encoding: gzip, deflate, br, zstd\r\n";
-    request_test += "Content-Type: text/plain\r\n";
+    request_test += "Content-Type: multipart/form-data; boundary=Test\r\n";
     request_test += "Content-Length: 42\r\n";
     request_test += "Connection: keep-alive\r\n";
     request_test += "\r\n";
 
     //body
-    request_test += "File+name=new_file&Content=Hello%20World%21&date=22&heure=12\r\n";
-
+    request_test += "This is the preamble.  It is to be ignored, though it ";
+    request_test += "is a handy place for mail composers to include an ";
+    request_test += "explanatory note to non-MIME compliant readers.\r\n"; 
+    request_test += "--Test\r\n"; 
+    request_test += "\r\n";
+    request_test += "This is implicitly typed plain ASCII text.\r\n"; 
+    request_test += "It does NOT end with a linebreak.\r\n"; 
+    request_test += "--Test\r\n";
+    request_test += "Content-type: text/plain; charset=us-ascii\r\n"; 
+    request_test += "\r\n";
+    request_test += "This is explicitly typed plain ASCII text.\r\n" ;
+    request_test += "It DOES end with a linebreak.\r\n" ;
+    request_test += "\r\n";
+    request_test += "--Test--\r\n" ;
+    request_test += "This is the epilogue.  It is also to be ignored\r\n";
     Request request;
     if(request.parse_request(request_test) == 1)
         std::cout << "parsing error" << std::endl;

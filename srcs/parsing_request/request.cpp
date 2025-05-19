@@ -80,7 +80,6 @@ int Request::check_request_format_post(std::string const &req) {
             return 1;
         if(*it == '\r' && *it == req[0])
             return 1;
-
         if(*it == '\r' && *(it - 1) == '\n' && *(it - 2) == '\r' && *(it + 1) == '\n')
         {
             ++end_found;
@@ -91,7 +90,9 @@ int Request::check_request_format_post(std::string const &req) {
             return 1;
     }
     if(end_found != 1)
+    {
         return 1;
+    }
     std::cout << "format post ok" << std::endl;
     return 0;
 }
@@ -224,7 +225,6 @@ int Request::parse_request(std::string const &req) {
             set_body(req);
         }
     }
-    
     if(_methode == "POST")
     {
         if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
@@ -260,9 +260,7 @@ int Request::parse_request(std::string const &req) {
                         filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
                     }
                     else
-                    {
                         break;
-                    }
                 }
             }
             new_file.open(filename.c_str());
@@ -290,9 +288,7 @@ int Request::parse_request(std::string const &req) {
                     filename = oss.str();
     
                     if (open(filename.c_str(), O_CREAT | O_EXCL | O_RDWR, 0644) == -1)
-                    {
                         continue;
-                    }
                     else
                     {
                         break;
@@ -310,9 +306,15 @@ int Request::parse_request(std::string const &req) {
             new_file <<_body;
             new_file.close();
         }
-        else if(_content_type == "multipart/form-data")
+        else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
         {
-
+            std::string boundary = "--";
+            size_t pos = _content_type.find("boundary=", 0);
+            if (pos == std::numeric_limits<size_t>::max())
+                return 1;
+            boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
+            std::cout << "boundary = " << boundary << std::endl;
+            std::cout << "body = " << _body << std::endl;
         }
         else
         {
@@ -406,7 +408,9 @@ int Request::set_host(std::string const & line)
 int Request::set_content_type(std::string const & line)
 {
     for (std::string::const_iterator it = line.begin() + 14; it != line.end(); it++)
+    {
         _content_type += *it;
+    }
     return 0;
 }
 
