@@ -1,0 +1,41 @@
+/* header style */
+header {
+    text-align: center;
+    padding: 20px;
+}
+
+/* nav menu style */
+nav {
+    text-align: center;
+    word-spacing: 20px;
+    padding: 10px;
+    background-color: rgb(77, 165, 42);
+}
+nav a {
+    color: black;
+    text-decoration: none;
+    font-size: larger;
+}
+
+/* 2 colonnes */
+*{
+    box-sizing: border-box;
+}
+.row {
+    display: flex;
+    flex-wrap: wrap;
+}
+.post-text-box {
+    flex: 70%;
+    padding: 20px;
+}
+.profile {
+    flex: 70%;
+    padding: 20px;
+}
+
+/* footer style */
+footer {
+    text-align: center;
+    background-color: rgb(77, 165, 42);
+}
