@@ -39,7 +39,7 @@ class   Lexer
         
         void    loadFile(const std::string & file);
         bool    checkEmptyLine(const std::string & line);
-        void    addDelimToken(int type, const std::string value, size_t n_line, size_t pos);
+        void    addDelimToken(int type, const char value, size_t n_line, size_t pos);
         void    addStrToken(const std::string value, size_t n_line, size_t pos);
         void    tokenizer(const std::string & line, size_t n_line);
 };

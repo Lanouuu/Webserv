@@ -48,11 +48,13 @@ bool    Lexer::checkEmptyLine(const std::string & line)
     return (false);
 }
 
-void    Lexer::addDelimToken(int type, const std::string value, size_t n_line, size_t pos)
+void    Lexer::addDelimToken(int type, const char value, size_t n_line, size_t pos)
 {
-    t_token token;
+    t_token     token;
+    std::string buf;
 
-    if (value == "{" && !this->_tokens.empty())
+    buf.push_back(value);
+    if (value == '{' && !this->_tokens.empty())
     {
         for (std::vector<t_token>::reverse_iterator it = this->_tokens.rbegin(); it != this->_tokens.rend(); it++)
         {
@@ -64,7 +66,7 @@ void    Lexer::addDelimToken(int type, const std::string value, size_t n_line, s
         }
     }
     token.type = type;
-    token.value = value;
+    token.value = buf;
     token.line = n_line;
     token.pos = pos;
     this->_tokens.push_back(token);
@@ -95,30 +97,31 @@ void    Lexer::addStrToken(const std::string value, size_t n_line, size_t pos)
 
 void    Lexer::tokenizer(const std::string & line, size_t n_line)
 {
-    std::string delimiter = " \t;{}#";
-    for (std::string::size_type pos = 0; pos < line.size(); pos++)
+    std::string delimiter = " \t{};#";
+    for (std::string::size_type pos = 0; line[pos]; pos++)
     {
-        if (line[pos] == '#')
-            break ;
-        if (line[pos] == ' ' || line[pos] == '\t')
+        while (line[pos] == ' ' || line[pos] == '\t')
             pos++;
+        if (pos >= line.size())
+            break ;
         if (line[pos] == '{')
-            addDelimToken(OpenBrace, &(line[pos]), n_line, pos);
+            addDelimToken(OpenBrace, line[pos], n_line, pos);
         else if (line[pos] == '}')
-            addDelimToken(CloseBrace, &(line[pos]), n_line, pos);
+            addDelimToken(CloseBrace, line[pos], n_line, pos);
         else if (line[pos] == ';')
-            addDelimToken(Semicolon, &(line[pos]), n_line, pos);
+            addDelimToken(Semicolon, line[pos], n_line, pos);
+        else if (line[pos] == '#')
+            break ;
         else
         {
             std::string buf;
             size_t temp_pos = pos;
             for (; delimiter.find(line[pos]) == std::string::npos; pos++)
                 buf.push_back(line[pos]);
+            pos--;
             if (!buf.empty())
                 addStrToken(buf, n_line, temp_pos);
         }
-        if (line[pos] == '#')
-        pos--;
     }
     return ;
 }
