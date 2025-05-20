@@ -23,6 +23,11 @@ Server::~Server(void)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
+std::string Server::getName(void) const
+{
+    return (this->_serverName);
+}
+
 void    Server::setName(const std::string & name)
 {
     this->_serverName = name;

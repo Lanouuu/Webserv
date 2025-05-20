@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Parser::Parser(const std::string file) : Lexer(file), _fileName(file)
+Parser::Parser(const std::string file) : Lexer(file), _fileName(file), _current(_tokens.begin())
 {
     getValidBlocks();
     getServIdent();
@@ -18,16 +18,12 @@ Parser::~Parser(void)
 }
 
 /****************************************************************************/
-/*                               Operators                                  */
-/****************************************************************************/
-
-/****************************************************************************/
-/*                           Getters / Setters                              */
-/****************************************************************************/
-
-/****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
+
+
+/*********Parser init*********/
+
 
 void    Parser::getValidBlocks(void)
 {
@@ -57,6 +53,10 @@ void    Parser::getLocaIdent(void)
     return ;
 }
 
+
+/*********Error*********/
+
+
 std::string Parser::tokenError(std::string error, t_token & token)
 {
     std::ostringstream buf;
@@ -66,20 +66,65 @@ std::string Parser::tokenError(std::string error, t_token & token)
         << this->_fileName << ":" << token.line << ":" << token.pos
         << RED << " error: " << END << error 
         << std::endl
-        << token.line << " | " << token.value
-        << std::endl;
+        << token.line << " | " << token.value;
     return (buf.str());
 }
 
-void    Parser::checkTokens(void)
+
+/*********Parsing*********/
+
+
+void    Parser::parseConf(server_map & servers)
 {
-    if (this->_tokens.begin()->value != "server")
-        throw std::invalid_argument(tokenError("expected server block", *(this->_tokens.begin())));
+    Server  serv_temp;
+
+    while (_current != _tokens.end())
+    {
+        if (match("server") && expect(Block))
+            parseServer(serv_temp);
+        else
+            throw std::invalid_argument(tokenError("expected server block", *this->_current));
+    }
+    servers.insert(std::make_pair(serv_temp.getName(), serv_temp));
+    return ;
 }
 
-void    Parser::confParser(server_map & servers)
+void    Parser::parseServer(Server & serv_temp)
 {
-    (void)servers;
-    checkTokens();
+    (void)serv_temp;
     return ;
+}
+
+
+/*********Parsing utils*********/
+
+
+t_token *Parser::peek(int offset)
+{
+    std::vector<t_token>::iterator it = _current + offset;
+    if (it >= _tokens.end())
+        return NULL;
+    return &(*it);
+}
+
+bool    Parser::match(std::string key)
+{
+    if (this->_current->value == key)
+        return true;
+    return false;
+}
+
+bool    Parser::expect(int type)
+{
+    if (this->_current->type == type)
+    {
+        ++this->_current;
+        return true;
+    }
+    return false;
+}
+
+void    Parser::advance(void)
+{
+    ++this->_current;
 }

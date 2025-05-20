@@ -14,13 +14,15 @@ class   Server
         Server(void);
         ~Server(void);
 
-        void    setName(const std::string & name);
-        void    setRoot(const std::string & root);
-        void    setHost(const std::string & host);
-        void    setIndex(const std::string & index);
-        void    setPort(const uint16_t & port);
+        void        setName(const std::string & name);
+        void        setRoot(const std::string & root);
+        void        setHost(const std::string & host);
+        void        setIndex(const std::string & index);
+        void        setPort(const uint16_t & port);
 
-        void    addLocation(const std::string & name, const Location & location);
+        std::string getName(void) const;
+
+        void        addLocation(const std::string & name, const Location & location);
 
     private:
     

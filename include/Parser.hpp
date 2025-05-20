@@ -19,22 +19,31 @@ class   Parser : public Lexer
         Parser(const std::string file);
         ~Parser(void);
 
-        void    confParser(server_map & servers);
+        void    parseConf(server_map & servers);
         
     private:
 
-        std::string             _fileName;
+        std::string                     _fileName;
 
-        std::set<std::string>   _validBlocks;
-        std::set<std::string>   _servIdentifiers;
-        std::set<std::string>   _locaIdentifiers;
+        std::set<std::string>           _validBlocks;
+        std::set<std::string>           _servIdentifiers;
+        std::set<std::string>           _locaIdentifiers;
+
+        std::vector<t_token>::iterator  _current;
 
         void            getValidBlocks(void);
         void            getServIdent(void);
         void            getLocaIdent(void);
 
-        void            checkTokens(void);
         std::string     tokenError(std::string error, t_token & token);
+
+        void            parseServer(Server & serv_temp);
+        void            parseLocation(Location & loca_temp);
+
+        t_token         *peek(int offset);
+        bool            match(std::string key);
+        bool            expect(int type);
+        void            advance(void);
 };
 
 #endif

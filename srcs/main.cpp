@@ -17,7 +17,7 @@ int main(int ac, char **av, char **env)
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr << e.what() << std::endl << std::endl;
         return (1);
     }
     
