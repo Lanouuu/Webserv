@@ -29,7 +29,7 @@ Lexer::~Lexer(void)
 
 void    Lexer::printTokens(void) const
 {
-    for (std::vector<t_token>::const_iterator it = this->_tokens.begin(); it != this->_tokens.end(); it++)
+    for (std::vector<t_token>::const_iterator it = _tokens.begin(); it != _tokens.end(); it++)
     {
         std::cout
             << "Type: " << (*it).type << ", "
@@ -54,9 +54,9 @@ void    Lexer::addDelimToken(int type, const char value, size_t n_line, size_t p
     std::string buf;
 
     buf.push_back(value);
-    if (value == '{' && !this->_tokens.empty())
+    if (value == '{' && !_tokens.empty())
     {
-        for (std::vector<t_token>::reverse_iterator it = this->_tokens.rbegin(); it != this->_tokens.rend(); it++)
+        for (std::vector<t_token>::reverse_iterator it = _tokens.rbegin(); it != _tokens.rend(); it++)
         {
             if ((*it).type == Identifier)
             {
@@ -69,7 +69,7 @@ void    Lexer::addDelimToken(int type, const char value, size_t n_line, size_t p
     token.value = buf;
     token.line = n_line;
     token.pos = pos;
-    this->_tokens.push_back(token);
+    _tokens.push_back(token);
     return ;
 }
 
@@ -78,11 +78,11 @@ void    Lexer::addStrToken(const std::string value, size_t n_line, size_t pos)
     t_token token;
     t_token last_token;
     
-    if (this->_tokens.empty())
+    if (_tokens.empty())
         token.type = Identifier;
-    if (!this->_tokens.empty())
+    if (!_tokens.empty())
     {
-        last_token = this->_tokens.back();
+        last_token = _tokens.back();
         if (last_token.type == OpenBrace || last_token.type == CloseBrace || last_token.type == Semicolon)
             token.type = Identifier;
         else
@@ -91,7 +91,7 @@ void    Lexer::addStrToken(const std::string value, size_t n_line, size_t pos)
     token.value = value;
     token.line = n_line;
     token.pos = pos;
-    this->_tokens.push_back(token);
+    _tokens.push_back(token);
     return ;
 }
 
