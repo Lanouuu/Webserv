@@ -51,6 +51,7 @@ class Request {
         int parse_request(std::string const &req);
         int check_request_format_get(std::string const &req);
         int check_request_format_post(std::string const &req);
+        int check_request_format_post_multi(std::string const &req);
         int parse_body_form();
         void    decode_content();
 

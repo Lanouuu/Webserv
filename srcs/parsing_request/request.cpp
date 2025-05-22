@@ -97,6 +97,35 @@ int Request::check_request_format_post(std::string const &req) {
     return 0;
 }
 
+int Request::check_request_format_post_multi(std::string const &req) {
+    std::string end;
+    int end_found = 0;
+    end = req.substr(req.size() - 2, 2);
+    if(end != "\r\n")
+        return 1;
+    for(std::string::const_iterator it = req.begin(); it != req.end(); it++)
+    {
+        if(*it == '\r' && *(it + 1) != '\n' )
+            return 1;
+        if(isalnum(*it) == 0 && *it == req[0])
+            return 1;
+        if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
+        {
+            ++end_found;
+           for (std::string::const_iterator it2 = it + 4; it2 != req.end(); it2++)
+           {
+                if ((*it2 == '\r' && *(it2 + 1) != '\n') || (*it2 == '\n' && *(it2 - 1) != '\r'))
+                    return 1;
+           }
+            break;
+        }
+        else if(*it == '\r' && *(it + 1) && isalnum(*(it + 1)) == 0 && *(it + 1) != '\n' && end_found == 0)
+            return 1;
+    }
+    std::cout << "format post ok" << std::endl;
+    return 0;
+}
+
 //recuperer le body dans une map (file name = blabla)
 int Request::parse_body_form() {
     std::map<std::string, std::string> data;
@@ -193,7 +222,7 @@ int Request::parse_request(std::string const &req) {
     std::istringstream buf(req.c_str());
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
         return 1;
-    if(req.compare(0, 4, "POST") == 0 && check_request_format_post(req) == 1)
+    if(req.compare(0, 4, "POST") == 0 && check_request_format_post(req) == 1 && check_request_format_post_multi(req) == 1)
         return 1;
     while (std::getline(buf, line) )
     {
@@ -223,6 +252,7 @@ int Request::parse_request(std::string const &req) {
         {
             word.clear();
             set_body(req);
+            break;
         }
     }
     if(_methode == "POST")
@@ -308,18 +338,107 @@ int Request::parse_request(std::string const &req) {
         }
         else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
         {
+            std::string content_disposition, name, filename, content_type, line, keyword, content;
+            size_t begin, end;
+            if (check_request_format_post_multi(req) == 1)
+                return 1;
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
                 return 1;
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
             std::cout << "boundary = " << boundary << std::endl;
-            std::cout << "body = " << _body << std::endl;
+            begin = _body.find(boundary, 0);
+            if (begin == std::numeric_limits<size_t>::max())
+                return 1;
+            end = _body.find(boundary, begin + boundary.size());
+            if (end == std::numeric_limits<size_t>::max())
+            {
+                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
+                {
+                    if (boundary.size() >= 2)
+                        boundary.erase(boundary.size() - 2);
+                    boundary += "--\r\n";
+                    std::cout << "end boudary = " << boundary << std::endl;
+                    break;
+                }
+                end =  _body.find(boundary, begin + boundary.size());
+            }
+            std::cout << "End = " << end << std::endl;
+            line = _body.substr(begin + boundary.size() - 2, end - boundary.size() - 2);
+            //upload
+            if (line.find("Content-Disposition: form-data; name=\"content\"; filename=", 0) != std::string::npos)
+            {
+                pos = line.find('\r', 0);
+                filename = line.substr(57, pos - 57);
+                filename.erase(0, 1);
+                filename.erase(filename.size() - 1, 1);
+                std::cout << "Filename = " << filename << std::endl;
+                std::cout << "END" << std::endl;
+            }
+            if ((pos = line.find("Content-Type:", 0)) != std::string::npos)
+            {
+                std::cout << "pos = " << pos << std::endl;
+                for(std::string::iterator it = line.begin() + pos + 14; *it != '\r'; it++)
+                {
+                    content_type += *it;
+                }
+                std::cout << "Content-type = " << content_type << std::endl;
+            }
+            pos = line.find("\r\n\r\n", 0);
+            content = line.substr(pos + 4, end);
+            std::cout << "pos = " << pos << std::endl;
+            std::cout << "content = " << content << std::endl;
+            std::ofstream new_file;
+            std::ifstream test_open_file(filename.c_str());
+            if(test_open_file.is_open())
+            {
+                std::cout << "File name already exist, add suffix" << std::endl;
+                filename += "_";
+                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                {
+                    std::stringstream ss;
+                    ss << i;
+                    filename += ss.str();
+                    if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                    {
+                        size_t pos = filename.find_last_of('_');
+                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                    }
+                    else
+                        break;
+                }
+            }
+            new_file.open(filename.c_str());
+            if(!new_file.is_open())
+            {
+                std::cout << "error creating new file" << std::endl;
+                return 1;
+            }
+            std::cout << "File = " << filename << std::endl;
+            new_file << content;
+            new_file.close();
+            std::cout << "line = " << line << std::endl;
         }
         else
         {
             std::cout << "ici" << std::endl;
             return 1;
+        }
+    }
+    else if (_methode == "DELETE")
+    {
+        _url.erase(0, 1);
+        std::ifstream file(_url.c_str());
+
+        if(file.is_open())
+        {
+            std::remove(_url.c_str());
+
+            if (std::ifstream(_url.c_str()))
+            {
+                std::cout << "Error, file could no be deleted" << std::endl;
+            }
         }
     }
     std::string response;
@@ -424,6 +543,7 @@ int Request::set_content_length(std::string const & line)
 int Request::set_body(std::string const & line)
 {
     //a modifier car \0
+    std::cout << "ICI" << std::endl;
     size_t pos = line.find("\r\n\r\n", 0);
     for (std::string::const_iterator it = line.begin() + pos + 4; it != line.end(); it++)
         _body += *it;
