@@ -1,10 +1,10 @@
 #include "parsing.hpp"
 
-void    parsingConfFile(std::string file, server_map & servers)
+void    parsingConfFile(std::string file, serv_vector & servers)
 {
     Parser   parser(file);
 
-   // parser.printTokens();
+    parser.printTokens();
     parser.parseConf(servers);
     return ;
 }

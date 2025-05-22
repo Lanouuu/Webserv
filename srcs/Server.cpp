@@ -23,23 +23,6 @@ Server::~Server(void)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
-std::string Server::getName(void) const
-{
-    return (this->_serverName);
-}
-
-void    Server::setName(const std::string & name)
-{
-    this->_serverName = name;
-    return ;
-}
-
-void    Server::setRoot(const std::string & root)
-{
-    this->_serverRoot = root;
-    return ;
-}
-
 void    Server::setHost(const std::string & host)
 {
     this->_serverHost = host;
@@ -61,6 +44,12 @@ void    Server::setPort(const uint16_t & port)
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
+
+void    Server::addName(const std::string & name)
+{
+    this->_serverName.push_back(name);
+    return ;
+}
 
 void    Server::addLocation(const std::string & name, const Location & location)
 {

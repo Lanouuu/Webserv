@@ -1,9 +1,16 @@
 #ifndef LEXER_HPP
 # define LEXER_HPP
 
+# define GREEN 	"\033[0;32m"
+# define RED	"\033[0;31m"
+# define END	"\033[0m"
+
 # include <iostream>
+# include <sstream>
 # include <fstream>
+# include <algorithm>
 # include <vector>
+# include <set>
 
 typedef struct s_token
 {
@@ -35,13 +42,23 @@ class   Lexer
 
     protected:
         
-        std::vector<t_token>    _tokens;
+        std::string             _fileName;
         
-        void    loadFile(const std::string & file);
-        bool    checkEmptyLine(const std::string & line);
-        void    addDelimToken(int type, const char value, size_t n_line, size_t pos);
-        void    addStrToken(const std::string value, size_t n_line, size_t pos);
-        void    tokenizer(const std::string & line, size_t n_line);
+        std::set<std::string>   _servID;
+        std::set<std::string>   _locaID;
+
+        std::vector<t_token>    _tokens;
+
+        std::string     tokenErr(std::string error, t_token & token);
+
+        void            getServIdent(void);
+        void            getLocaIdent(void);
+
+        void            loadFile(const std::string & file);
+        bool            checkEmptyLine(const std::string & line);
+        void            addDelimToken(int type, const char value, size_t n_line, size_t pos);
+        void            addStrToken(const std::string value, size_t n_line, size_t pos);
+        void            tokenizer(const std::string & line, size_t n_line);
 };
 
 #endif

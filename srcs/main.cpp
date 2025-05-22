@@ -8,7 +8,7 @@ int main(int ac, char **av, char **env)
 
     try
     {
-        server_map   servers;
+        serv_vector  servers;
 
         if (ac > 2)
             throw std::invalid_argument("Error: too many arguments");

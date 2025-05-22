@@ -4,6 +4,6 @@
 # include "Server.hpp"
 # include "Parser.hpp"
 
-void    parsingConfFile(std::string file, server_map & servers);
+void    parsingConfFile(std::string file, serv_vector & servers);
 
 #endif

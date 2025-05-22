@@ -28,7 +28,7 @@ Location &  Location::operator=(const Location & rhs)
 {
     if (this != &rhs)
     {
-        this->_locationRoot = rhs._locationRoot;
+        this->_locationAlias = rhs._locationAlias;
         this->_locationIndex = rhs._locationIndex;
         this->_locationUpload = rhs._locationUpload;
         this->_locationMethod = rhs._locationMethod;
@@ -40,9 +40,9 @@ Location &  Location::operator=(const Location & rhs)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
-void    Location::setRoot(const std::string & root)
+void    Location::setAlias(const std::string & alias)
 {
-    this->_locationRoot = root;
+    this->_locationAlias = alias;
     return ;
 }
 

@@ -4,11 +4,8 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Parser::Parser(const std::string file) : Lexer(file), _fileName(file), _current(_tokens.begin())
+Parser::Parser(const std::string file) : Lexer(file), _current(_tokens.begin())
 {
-    getValidBlocks();
-    getServIdent();
-    getLocaIdent();
     return ;
 }
 
@@ -22,59 +19,10 @@ Parser::~Parser(void)
 /****************************************************************************/
 
 
-/*********Parser init*********/
-
-
-void    Parser::getValidBlocks(void)
-{
-    _validBlocks.insert("server");
-    _validBlocks.insert("location");
-    return ;
-}
-
-void    Parser::getServIdent(void)
-{
-    _servID.insert("server_name");
-    _servID.insert("listen");
-    _servID.insert("root");
-    _servID.insert("error_page");
-    return ;
-}
-
-void    Parser::getLocaIdent(void)
-{
-    _locaID.insert("index");
-    _locaID.insert("set_method");
-    _locaID.insert("return");
-    _locaID.insert("root");
-    _locaID.insert("cgi");
-    _locaID.insert("autoindex");
-    _locaID.insert("index");
-    return ;
-}
-
-
-/*********Error*********/
-
-
-std::string Parser::tokenErr(std::string error, t_token & token)
-{
-    std::ostringstream buf;
-
-    buf << std::endl
-        << RED << "Error: " << END
-        << _fileName << ":" << token.line << ":" << token.pos + 1
-        << RED << " error: " << END << error 
-        << std::endl
-        << token.line << " | " << token.value;
-    return (buf.str());
-}
-
-
 /*********Parsing*********/
 
 
-void    Parser::parseConf(server_map & servers)
+void    Parser::parseConf(serv_vector & servers)
 {
     Server  serv_temp;
 
@@ -88,19 +36,22 @@ void    Parser::parseConf(server_map & servers)
             throw std::invalid_argument(tokenErr("expected server block", *_current));
         //_current++;
     }
-    servers.insert(std::make_pair(serv_temp.getName(), serv_temp));
+    servers.push_back(serv_temp);
     return ;
 }
 
 void    Parser::parseServer(Server & serv_temp)
 {
-    advance();
-    checkEOF();
+    advanceAndCheck();
     if (!expect(OpenBrace))
-        throw std::invalid_argument(tokenErr("expected \"{\" after server identifier", *_current));
+        throw std::invalid_argument(tokenErr("expected \"{\" after server identifier", *peek(-1)));
     while (_current->type != CloseBrace && _current != _tokens.end())
     {
-        if (_current->type == Identifier)
+        if (_current->type == OpenBrace || _current->type == Semicolon)
+            throw std::invalid_argument(tokenErr("invalid delimiter \"" + _current->value + "\"", *_current));
+        else if (_current->type == String)
+            throw std::invalid_argument(tokenErr("invalid server directive", *_current));
+        else if (_current->type == Identifier)
             parseServDirective(serv_temp);
         else if(_current->type == Block && match("location"))
             parseLocation(serv_temp);
@@ -116,25 +67,35 @@ void    Parser::parseLocation(Server & serv_temp)
 
 void    Parser::parseServDirective(Server & serv_temp)
 {
-    if (std::find(_servID.begin(), _servID.end(), _current->value) == _servID.end())
-        throw std::invalid_argument(tokenErr("invalid server directive", *_current));
     std::string value = _current->value;
-    if (match("server_name") || match("listen") || match("root"))
+    if (match("listen"))
     {
         advanceAndCheck();
         if (_current->type == String)
         {
-            if (value == "server_name")
-                serv_temp.setName(_current->value);
-           // else if (value == "listen")
-               // serv_temp.setPort(_current->value);
-            else if (value == "root")
-                serv_temp.setRoot(_current->value);
+            if (value == "listen")
+                parsePort(serv_temp, _current->value);
         }
         else
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         advanceAndCheck();
-        // sur cette regle verifier qu'il n'y ait qu'une seule value apres l'identifier
+        if (_current->type == String)
+            throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
+    }
+    else if (match("server_name"))
+    {
+        advanceAndCheck();
+        if (_current->type == String)
+        {
+            while (_current->type == String)
+            {
+                if (value == "server_name")
+                    serv_temp.addName(_current->value);
+                advanceAndCheck();
+            }
+        }
+        else
+            throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
     }
     if (!expect(Semicolon))
         throw std::invalid_argument(tokenErr("expected \";\" at the end of directive", *peek(-1)));
@@ -147,6 +108,11 @@ void    Parser::parseLocaDirective(Location & loca_temp)
     return ;
 }
 
+void    Parser::parsePort(Server & serv_temp, std::string & value)
+{
+    (void)serv_temp;
+    (void)value;
+}
 
 /*********Parsing utils*********/
 
@@ -186,7 +152,7 @@ void    Parser::advance(void)
 void    Parser::checkEOF(void)
 {
     if (_current == _tokens.end())
-        throw std::invalid_argument(tokenErr("invalid EOF", *_current));
+        throw std::invalid_argument(tokenErr("invalid EOF", *peek(-1)));
     return ;
 }
 

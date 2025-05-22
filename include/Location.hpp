@@ -15,7 +15,7 @@ class   Location
 
         Location &  operator=(const Location & rhs);
 
-        void    setRoot(const std::string & root);
+        void    setAlias(const std::string & alias);
         void    setIndex(const std::string & index);
         void    setUpload(const std::string & path);
 
@@ -23,7 +23,7 @@ class   Location
 
     private:
     
-        std::string                 _locationRoot;
+        std::string                 _locationAlias;
         std::string                 _locationIndex;
         std::string                 _locationUpload;
         std::vector<std::string>    _locationMethod;
