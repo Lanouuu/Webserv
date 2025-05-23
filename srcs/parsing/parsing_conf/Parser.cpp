@@ -71,13 +71,10 @@ void    Parser::parseServDirective(Server & serv_temp)
     if (match("listen"))
     {
         advanceAndCheck();
-        if (_current->type == String)
-        {
-            if (value == "listen")
-                parsePort(serv_temp, _current->value);
-        }
-        else
+        if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
+        if (value == "listen")
+            parsePort(serv_temp, _current->value);
         advanceAndCheck();
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
@@ -85,33 +82,68 @@ void    Parser::parseServDirective(Server & serv_temp)
     else if (match("server_name"))
     {
         advanceAndCheck();
-        if (_current->type == String)
-        {
-            while (_current->type == String)
-            {
-                if (value == "server_name")
-                    serv_temp.addName(_current->value);
-                advanceAndCheck();
-            }
-        }
-        else
+        if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
+        while (_current->type == String)
+        {
+            if (value == "server_name")
+                serv_temp.addName(_current->value);
+            advanceAndCheck();
+        }
     }
     if (!expect(Semicolon))
         throw std::invalid_argument(tokenErr("expected \";\" at the end of directive", *peek(-1)));
     return ;
 }
 
-void    Parser::parseLocaDirective(Location & loca_temp)
+void    Parser::parseLocaDirective(Location & loca_temp) 
 {
     (void)loca_temp;
     return ;
 }
 
-void    Parser::parsePort(Server & serv_temp, std::string & value)
+
+/*********Parsing Ip/port*********/
+
+
+void    Parser::parsePort(Server & serv_temp, std::string & value) 
 {
-    (void)serv_temp;
-    (void)value;
+    long        port = -1;
+    std::string str_ip;
+
+    if (value.find_first_not_of("0123456789") == std::string::npos)
+    {
+        port = strtol(value.c_str(), NULL, 10);
+        str_ip = "0.0.0.0";
+    }
+    else
+    {
+        std::string str_port;
+        if (std::count(value.begin(), value.end(), ':') != 1)
+            throw std::invalid_argument(tokenErr("invalid port", *_current));
+        str_port = value.substr(value.find(':') + 1, value.size());
+        if (str_port.empty())
+            throw std::invalid_argument(tokenErr("invalid port", *_current));
+        if (str_port.find_first_not_of("0123456789") != std::string::npos)
+            throw std::invalid_argument(tokenErr("invalid port", *_current));
+        port = strtol(str_port.c_str(), NULL, 10);
+        str_ip = parseIP(value.substr(0, value.find(':')));
+    }
+    if (port == ERANGE || port < 0 || port > 65535)
+        throw std::invalid_argument(tokenErr("invalid port [0-65535]", *_current));
+    serv_temp.setPort(static_cast<uint16_t>(port));
+    serv_temp.setIP(str_ip);
+}
+
+std::string Parser::parseIP(std::string value)
+{
+    if (value == "*")
+        return ("0.0.0.0");
+    if (value.find_first_not_of("0123456789.") != std::string::npos 
+        || std::count(value.begin(), value.end(), '.') != 3
+        || value.empty())
+        throw std::invalid_argument(tokenErr("invalid IP address", *_current));
+    return (value);
 }
 
 /*********Parsing utils*********/
@@ -156,7 +188,7 @@ void    Parser::checkEOF(void)
     return ;
 }
 
-void    Parser::advanceAndCheck(void)
+void    Parser::advanceAndCheck(void) 
 {
     if (_current != _tokens.end())
         ++_current;

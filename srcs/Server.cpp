@@ -41,6 +41,12 @@ void    Server::setPort(const uint16_t & port)
     return ;
 }
 
+void    Server::setIP(const std::string & ip)
+{
+    this->_serverIP = ip;
+    return ;
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
