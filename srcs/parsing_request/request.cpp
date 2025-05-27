@@ -36,8 +36,10 @@ std::string Request::get_host() {
     return _host;
 }
 
-std::string Request::get_body() {
-    return _body;
+void Request::get_body() {
+    for (size_t i = 0; i < _body.size(); i++)
+        std::cout << _body[i];
+    std::cout << std::endl;
 }
 
 std::string Request::get_content_type() {
@@ -68,61 +70,77 @@ int Request::check_request_format_get(std::string const &req) {
 }
 
 //check si on a bien \r\n a la fin des lignes de la requete post, retunr error 1
-int Request::check_request_format_post(std::string const &req) {
-    std::string end;
+int Request::check_request_format_post() {
     int end_found = 0;
-    end = req.substr(req.size() - 2, 2);
-    if(end != "\r\n")
+    if(*(_request.end() - 2) != '\n' || *(_request.end() - 3) != '\r')
+    {
         return 1;
-    for(std::string::const_iterator it = req.end() - 2; it != req.begin(); it--)
+    }
+    for(std::vector<char>::const_iterator it = _request.end() - 2; it != _request.begin(); it--)
     {
         if(*it == '\n' && *(it - 1) != '\r' )
+        {
             return 1;
-        if(*it == '\r' && *it == req[0])
+        }
+        if(*it == '\r' && *it == _request[0])
+        {
             return 1;
+        }
         if(*it == '\r' && *(it - 1) == '\n' && *(it - 2) == '\r' && *(it + 1) == '\n')
         {
             ++end_found;
             if(end_found != 1)
+            {
                 return 1;
+            }
         }
-        else if(*it == '\r' && *(it - 1) && isalnum(*(it - 1)) == 0 && *(it - 1) != '\n')
+        else if(*it == '\r' && *(it - 1) && isalnum(*(it - 1)) == 0 && *(it - 1) != '\n' && end_found == 1)
+        {
             return 1;
+        }
     }
     if(end_found != 1)
     {
         return 1;
     }
-    std::cout << "format post ok" << std::endl;
+    std::cout << "format post xform ok" << std::endl;
     return 0;
 }
 
-int Request::check_request_format_post_multi(std::string const &req) {
-    std::string end;
+int Request::check_request_format_post_multi() {
     int end_found = 0;
-    end = req.substr(req.size() - 2, 2);
-    if(end != "\r\n")
+    if(*(_request.end() - 2) != '\n' || *(_request.end() - 3) != '\r')
+    {
         return 1;
-    for(std::string::const_iterator it = req.begin(); it != req.end(); it++)
+    }
+    for(std::vector<char>::const_iterator it = _request.begin(); it != _request.end(); it++)
     {
         if(*it == '\r' && *(it + 1) != '\n' )
+        {
             return 1;
-        if(isalnum(*it) == 0 && *it == req[0])
+        }
+        if(isalnum(*it) == 0 && *it == _request[0])
+        {
             return 1;
+        }
         if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
         {
             ++end_found;
-           for (std::string::const_iterator it2 = it + 4; it2 != req.end(); it2++)
+           for (std::vector<char>::const_iterator it2 = it + 4; it2 != _request.end(); it2++)
            {
                 if ((*it2 == '\r' && *(it2 + 1) != '\n') || (*it2 == '\n' && *(it2 - 1) != '\r'))
+                {
                     return 1;
+                }
            }
             break;
         }
         else if(*it == '\r' && *(it + 1) && isalnum(*(it + 1)) == 0 && *(it + 1) != '\n' && end_found == 0)
+        {
             return 1;
+        }
     }
-    std::cout << "format post ok" << std::endl;
+    std::cout << "format post multi ok" << std::endl;
     return 0;
 }
 
@@ -131,7 +149,7 @@ int Request::parse_body_form() {
     std::map<std::string, std::string> data;
     std::string key, value;
     int a = 0;
-    for(std::string::const_iterator it = _body.begin(); it != _body.end(); it++)
+    for(std::vector<char>::const_iterator it = _body.begin(); it != _body.end(); it++)
     {
         if(*it == '=')
         {
@@ -222,7 +240,7 @@ int Request::parse_request(std::string const &req) {
     std::istringstream buf(req.c_str());
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
         return 1;
-    if(req.compare(0, 4, "POST") == 0 && check_request_format_post(req) == 1 && check_request_format_post_multi(req) == 1)
+    if(req.compare(0, 4, "POST") == 0 && check_request_format_post() == 1 && check_request_format_post_multi() == 1)
         return 1;
     while (std::getline(buf, line) )
     {
@@ -251,7 +269,7 @@ int Request::parse_request(std::string const &req) {
         if (word == "\r")
         {
             word.clear();
-            set_body(req);
+            set_body();
             break;
         }
     }
@@ -266,7 +284,7 @@ int Request::parse_request(std::string const &req) {
         }
         if(_content_type == "application/x-www-form-urlencoded\r")
         {
-            if(parse_body_form() == 1)
+            if(parse_body_form() == 1 && check_request_format_post() == 1)
             {
                 std::cout << "error in parse_body_form" << std::endl;
                 return 1;
@@ -333,27 +351,31 @@ int Request::parse_request(std::string const &req) {
                 return 1;
             }
             std::cout << "upload file = " << filename.c_str() << std::endl;
-            new_file <<_body;
+            new_file.write(&_body[0], _body.size());
             new_file.close();
         }
         else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
         {
-            std::string content_disposition, name, filename, content_type, line, keyword, content;
-            size_t begin, end;
-            if (check_request_format_post_multi(req) == 1)
+            std::string content_disposition, name, filename, content_type, content;
+            std::vector<char> line;
+            if (check_request_format_post_multi() == 1)
                 return 1;
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
+            {
                 return 1;
+            }
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
             std::cout << "boundary = " << boundary << std::endl;
-            begin = _body.find(boundary, 0);
-            if (begin == std::numeric_limits<size_t>::max())
+            std::cout << "boundary size = " << boundary.size() << std::endl;
+            std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+            if (begin == _body.end())
                 return 1;
-            end = _body.find(boundary, begin + boundary.size());
-            if (end == std::numeric_limits<size_t>::max())
+            std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+            if (end == _body.end())
             {
+                std::cout << "OK" << std::endl;
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
@@ -362,33 +384,97 @@ int Request::parse_request(std::string const &req) {
                     std::cout << "end boudary = " << boundary << std::endl;
                     break;
                 }
-                end =  _body.find(boundary, begin + boundary.size());
+                end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             }
-            std::cout << "End = " << end << std::endl;
-            line = _body.substr(begin + boundary.size() - 2, end - boundary.size() - 2);
-            //upload
-            if (line.find("Content-Disposition: form-data; name=\"content\"; filename=", 0) != std::string::npos)
+            std::cout << "End = " << *end << std::endl;
+            size_t boundary_pos = end - _body.begin();
+            begin += boundary.size();
+            for (;begin != end; begin++)
             {
-                pos = line.find('\r', 0);
-                filename = line.substr(57, pos - 57);
-                filename.erase(0, 1);
-                filename.erase(filename.size() - 1, 1);
-                std::cout << "Filename = " << filename << std::endl;
-                std::cout << "END" << std::endl;
+                line.push_back(*begin);
             }
-            if ((pos = line.find("Content-Type:", 0)) != std::string::npos)
+            for (size_t i = 0; i < line.size(); i++)
+                std::cout << line[i];
+            std::cout << std::endl;
+            //upload
+            const char keyword[] = {"Content-Disposition: form-data; name=\"filename\"; filename="};
+            begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
+            std::cout << "begin = " << begin - line.begin() << std::endl;
+            if (begin != line.end())
+            {
+                const char pos[] = {'\r'};
+                end = std::search(line.begin(), line.end(), pos, pos + sizeof(pos));
+                std::cout << "end = " << end - line.begin() << std::endl;
+                if (end != line.end())
+                {
+                    for (std::vector<char>::const_iterator it = line.begin() + 58; it != end; it++)
+                        filename += *it;
+                    filename.erase(0, 1);
+                    filename.erase(filename.size() - 1, 1);
+                    std::cout << "Filename = " << filename << std::endl;
+                    std::cout << "END" << std::endl;
+                }
+            }
+            else
+            {
+                std::cout << "Pas ok 0" << std::endl;
+                return 1;
+            }
+
+
+            begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+            std::cout << "boudary = " << boundary << std::endl;
+            std::cout << "begin = " << begin - _body.begin() << std::endl;
+            end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+            std::cout << "end = " << end - _body.begin() << std::endl;
+            if (end != _body.end())
+            {
+                std::cout << "OK" << std::endl;
+                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
+                {
+                    if (boundary.size() >= 2)
+                        boundary.erase(boundary.size() - 2);
+                    boundary += "--\r\n";
+                    std::cout << "end boudary = " << boundary << std::endl;
+                    break;
+                }
+                end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
+            }
+            line.erase(line.begin(), line.end() - 1);
+            for (;begin != end; begin++)
+            {
+                line.push_back(*begin);
+            }
+            const char keyword2[] = {"Content-Type:"};
+            begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
+            if (begin != line.end())
             {
                 std::cout << "pos = " << pos << std::endl;
-                for(std::string::iterator it = line.begin() + pos + 14; *it != '\r'; it++)
+                for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
                 {
                     content_type += *it;
                 }
                 std::cout << "Content-type = " << content_type << std::endl;
             }
-            pos = line.find("\r\n\r\n", 0);
-            content = line.substr(pos + 4, end);
-            std::cout << "pos = " << pos << std::endl;
-            std::cout << "content = " << content << std::endl;
+            else
+            {
+                std::cout << "Pas ok" << std::endl;
+                return 1;
+            }
+            const char keyword3[] = {'\r', '\n', '\r', '\n'};
+            begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
+            if (begin != line.end())
+            {
+                for (std::vector<char>::const_iterator it = begin + 4; it != line.end() - boundary.size() - 3; it++)
+                    content += *it;
+                std::cout << "pos = " << pos << std::endl;
+                std::cout << "content = " << content << std::endl;
+            }
+            else
+            {
+                std::cout << "Return" << std::endl;
+                return 1;
+            }
             std::ofstream new_file;
             std::ifstream test_open_file(filename.c_str());
             if(test_open_file.is_open())
@@ -418,7 +504,7 @@ int Request::parse_request(std::string const &req) {
             std::cout << "File = " << filename << std::endl;
             new_file << content;
             new_file.close();
-            std::cout << "line = " << line << std::endl;
+            // std::cout << "line = " << line << std::endl;
         }
         else
         {
@@ -489,6 +575,19 @@ int Request::set_methode(std::string const & line)
     return 0;
 }
 
+void    Request::add_request(char buffer[], size_t size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        _request.push_back(buffer[i]);
+    }
+    // for(size_t i = 0; i < size; i++)
+    // {
+    //     std::cout << _request[i];
+    // }
+    // std::cout << std::endl;
+}
+
 int Request::set_accept(std::string const & line)
 {
     for (std::string::const_iterator it = line.begin() + 8; it != line.end(); it++)
@@ -540,13 +639,19 @@ int Request::set_content_length(std::string const & line)
     return 0;
 }
 
-int Request::set_body(std::string const & line)
+int Request::set_body()
 {
     //a modifier car \0
-    std::cout << "ICI" << std::endl;
-    size_t pos = line.find("\r\n\r\n", 0);
-    for (std::string::const_iterator it = line.begin() + pos + 4; it != line.end(); it++)
-        _body += *it;
+    const char word[] = {'\r', '\n', '\r', '\n'};
+    std::vector<char>::const_iterator it = std::search(_request.begin(), _request.end(), word, word + 4);
+    if (it != _request.end())
+    {
+        it += 4;
+        for (; it != _request.end(); it++)
+            _body.push_back(*it);
+    }
+    else
+        return 1;
     return 0;
 }
 
