@@ -28,6 +28,9 @@ Location &  Location::operator=(const Location & rhs)
 {
     if (this != &rhs)
     {
+        this->_locationBaseUri = rhs._locationBaseUri;
+        this->_locationRoot = rhs._locationRoot;
+        this->_locationUrl = rhs._locationUrl;
         this->_locationAlias = rhs._locationAlias;
         this->_locationIndex = rhs._locationIndex;
         this->_locationUpload = rhs._locationUpload;
