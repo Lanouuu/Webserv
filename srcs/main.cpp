@@ -8,7 +8,7 @@ int main(int ac, char **av, char **env)
     (void)av;
     (void)ac;
     
-    char request_test[] = "POST /ex01 HTTP/1.1\r\n"
+    char request_test[] = "GET Makefile HTTP/1.1\r\n"
      "Host: localhost:8080\r\n"
      "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n"
      "Accept-Language: en-US,en;q=0.5\r\n"
@@ -16,21 +16,21 @@ int main(int ac, char **av, char **env)
      "Content-Type: multipart/form-data; boundary=Test\r\n"
      "Content-Length: 42\r\n"
      "Connection: keep-alive\r\n"
-     "\r\n"
-     "--Test\r\n"
-     "Content-Disposition: form-data; name=\"filename\"; filename=\"ex01.cpp\"\r\n"
-     "\r\n"
-     "gferwgrega\r\n"
-     "--Test\r\n"
-     "Content-Disposition: form-data; name=\"content\"; filename=\"ex01.cpp\"\r\n"
-     "Content-Type: text/x-c++src\r\n"
-     "\r\n"
-     "class Aw\0esome\r\n"
-     "{\r\n"
-     "public:\r\n"
-     "Awesome( void ) : _n( 42 ) { return; }\r\n"
-     "int get( void ) const {\0 return this->_n; }\r\n"
-     "--Test--\r\n";
+     "\r\n";
+    //  "--Test\r\n"
+    //  "Content-Disposition: form-data; name=\"filename\"; filename=\"ex01.cpp\"\r\n"
+    //  "\r\n"
+    //  "gferwgrega\r\n"
+    //  "--Test\r\n"
+    //  "Content-Disposition: form-data; name=\"content\"; filename=\"ex01.cpp\"\r\n"
+    //  "Content-Type: text/x-c++src\r\n"
+    //  "\r\n"
+    //  "class Aw\0esome\r\n"
+    //  "{\r\n"
+    //  "public:\r\n"
+    //  "Awesome( void ) : _n( 42 ) { return; }\r\n"
+    //  "int get( void ) const {\0 return this->_n; }\r\n"
+    //  "--Test--\r\n";
 
     //body
     //  "This is the preamble.  It is to be ignored, though it "
@@ -57,12 +57,13 @@ int main(int ac, char **av, char **env)
     // size_t readed = read(0, &line, 300);
     // if (readed <= 0)
     //     return 0;
+    int exit_code = 0;
     try
     {
         Request request;
         size_t size = sizeof(request_test);
         request.add_request(request_test, size);
-        if(request.parse_request(request_test) == 1)
+        if((exit_code = request.parse_request(request_test)) != 0)
             std::cout << "parsing error" << std::endl;
     }
     catch(const std::exception& e)
@@ -81,5 +82,5 @@ int main(int ac, char **av, char **env)
     // std::cout << "connection : " << request.get_connection() << std::endl;
     // request.get_body();
 
-    return (0);
+    return (exit_code);
 }

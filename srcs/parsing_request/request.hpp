@@ -59,5 +59,5 @@ class Request {
         void    add_request(char buffer[], size_t size);
         void    decode_content();
 
-        std::string create_response();
+        std::string create_response(int succes_code);
 };

@@ -237,11 +237,12 @@ void Request::decode_content() {
 int Request::parse_request(std::string const &req) {
     std::string line;
     std::string word;
+    int succes_code = 0;
     std::istringstream buf(req.c_str());
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
-        return 1;
+        return 400;
     if(req.compare(0, 4, "POST") == 0 && check_request_format_post() == 1 && check_request_format_post_multi() == 1)
-        return 1;
+        return 400;
     while (std::getline(buf, line) )
     {
         std::string methods[] = {"GET", "POST", "DELETE", "Accept", "Accept-Language", "Accept-Encoding", "Connection", "Host", "Content-Type", "Content-Length"};
@@ -255,11 +256,11 @@ int Request::parse_request(std::string const &req) {
                     if (word == methods[i])
                     {
                         if ((this->*funct[i])(line) == 1)
-                            return 1;
+                            return 400;
                         break ;
                     }
                     else if(i == sizeof(methods) / sizeof(methods[0]) && word != methods[sizeof(methods) / sizeof(methods[0])])
-                        return 1;
+                        return 400;
                 }
                 word.clear();
                 break;
@@ -280,14 +281,14 @@ int Request::parse_request(std::string const &req) {
         for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
         {
             if(!isdigit(*it))
-                return 1;
+                return 400;
         }
         if(_content_type == "application/x-www-form-urlencoded\r")
         {
             if(parse_body_form() == 1 && check_request_format_post() == 1)
             {
                 std::cout << "error in parse_body_form" << std::endl;
-                return 1;
+                return 400;
             }
             std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
             std::ofstream new_file;
@@ -304,8 +305,12 @@ int Request::parse_request(std::string const &req) {
                     filename += ss.str();
                     if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
                     {
-                        size_t pos = filename.find_last_of('_');
-                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                        if (errno == EEXIST)
+                        {
+                            size_t pos = filename.find_last_of('_');
+                            filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                        }
+                        return 500;
                     }
                     else
                         break;
@@ -315,7 +320,7 @@ int Request::parse_request(std::string const &req) {
             if(!new_file.is_open())
             {
                 std::cout << "error creating new file" << std::endl;
-                return 1;
+                return 500;
             }
             std::cout << "File = " << filename << std::endl;
             decode_content();
@@ -336,7 +341,11 @@ int Request::parse_request(std::string const &req) {
                     filename = oss.str();
     
                     if (open(filename.c_str(), O_CREAT | O_EXCL | O_RDWR, 0644) == -1)
-                        continue;
+                    {
+                        if (errno == EEXIST)
+                            continue;
+                        return 500;
+                    }
                     else
                     {
                         break;
@@ -348,7 +357,7 @@ int Request::parse_request(std::string const &req) {
             if(!new_file.is_open())
             {
                 std::cout << "error creating new file" << std::endl;
-                return 1;
+                return 500;
             }
             std::cout << "upload file = " << filename.c_str() << std::endl;
             new_file.write(&_body[0], _body.size());
@@ -359,19 +368,19 @@ int Request::parse_request(std::string const &req) {
             std::string content_disposition, name, filename, content_type, content;
             std::vector<char> line;
             if (check_request_format_post_multi() == 1)
-                return 1;
+                return 400;
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
             {
-                return 1;
+                return 400;
             }
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
             std::cout << "boundary = " << boundary << std::endl;
             std::cout << "boundary size = " << boundary.size() << std::endl;
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
-                return 1;
+                return 400;
             std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (end == _body.end())
             {
@@ -418,7 +427,7 @@ int Request::parse_request(std::string const &req) {
             else
             {
                 std::cout << "Pas ok 0" << std::endl;
-                return 1;
+                return 400;
             }
 
 
@@ -459,7 +468,7 @@ int Request::parse_request(std::string const &req) {
             else
             {
                 std::cout << "Pas ok" << std::endl;
-                return 1;
+                return 400;
             }
             const char keyword3[] = {'\r', '\n', '\r', '\n'};
             begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
@@ -473,7 +482,7 @@ int Request::parse_request(std::string const &req) {
             else
             {
                 std::cout << "Return" << std::endl;
-                return 1;
+                return 400;
             }
             std::ofstream new_file;
             std::ifstream test_open_file(filename.c_str());
@@ -488,8 +497,11 @@ int Request::parse_request(std::string const &req) {
                     filename += ss.str();
                     if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
                     {
-                        size_t pos = filename.find_last_of('_');
-                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                        if (errno == EEXIST)
+                        {
+                            size_t pos = filename.find_last_of('_');
+                            filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                        }
                     }
                     else
                         break;
@@ -499,7 +511,7 @@ int Request::parse_request(std::string const &req) {
             if(!new_file.is_open())
             {
                 std::cout << "error creating new file" << std::endl;
-                return 1;
+                return 500;
             }
             std::cout << "File = " << filename << std::endl;
             new_file << content;
@@ -509,8 +521,9 @@ int Request::parse_request(std::string const &req) {
         else
         {
             std::cout << "ici" << std::endl;
-            return 1;
+            return 415;
         }
+        succes_code = 201;
     }
     else if (_methode == "DELETE")
     {
@@ -520,15 +533,19 @@ int Request::parse_request(std::string const &req) {
         if(file.is_open())
         {
             std::remove(_url.c_str());
-
             if (std::ifstream(_url.c_str()))
             {
                 std::cout << "Error, file could no be deleted" << std::endl;
             }
+            succes_code = 204;
         }
+        else
+            return 404;
     }
+    if (_methode == "GET")
+        succes_code = 200;
     std::string response;
-    response = create_response();
+    response = create_response(succes_code);
     std::cout << "response : " << response << std::endl;
     // send(client_fd, response.c_str(), response.length(), 0);
     // close(client_fd);
@@ -668,24 +685,41 @@ std::string get_file_type(const std::string& path) {
     return "application/octet-stream";
 }
 
-std::string Request::create_response() {
+std::string Request::create_response(int succes_code) {
     std::string root_path = "./";
+    std::ostringstream response;
     std::ifstream file(_url.c_str(), std::ios::binary);
     if (!file) {
         return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
     }
-
-    std::ostringstream ss;
-    ss << file.rdbuf();
-    std::string body = ss.str();
-
-    std::ostringstream response;
-    response << "HTTP/1.1 200 OK\r\n";
-    response << "Content-Type: " << get_file_type(_url) << "\r\n";
-    response << "Content-Length: " << body.size() << "\r\n";
-    response << "Connection: close\r\n";
-    response << "\r\n";
-    response << body;
-
+    else
+    {
+        std::ostringstream ss;
+        ss << file.rdbuf();
+        std::string body = ss.str();
+        if (succes_code == 200)
+        {
+            
+            response << "HTTP/1.1 200 OK\r\n";
+            response << "Content-Type: " << get_file_type(_url) << "\r\n";
+            response << "Content-Length: " << body.size() << "\r\n";
+            response << "Connection: keep-alive\r\n";
+            response << "\r\n";
+            response << body;
+        }
+        else if (succes_code == 201)
+        {           
+            response << "HTTP/1.1 201 Created\r\n";
+            response << _url << "\r\n";
+            response << "Content-Type: " << get_file_type(_url) << "\r\n";
+            response << "Content-Length: " << "27" << "\r\n";
+            response << "Connection: keep-alive\r\n";
+            response << "\r\n";
+            response << "File successfully created\r\n";
+            
+        }
+        else if (succes_code == 204)
+            response << "HTTP/1.1 204 No Content\r\n";
+    }
     return response.str();
 }
