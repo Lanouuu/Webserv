@@ -19,22 +19,22 @@ Parser::~Parser(void)
 /****************************************************************************/
 
 
-/*********Parsing*********/
+/*********Parsing Server*********/
 
 
 void    Parser::parseConf(serv_vector & servers)
 {
     Server  serv_temp;
-
-    this->printTokens();
+    int     nb_serv = 0;
 
     while (_current != _tokens.end())
     {
-        if (match("server"))
-            parseServer(serv_temp);
-        else
+        if (!match("server") && nb_serv == 0)
             throw std::invalid_argument(tokenErr("expected server block", *_current));
-        //_current++;
+        else if (match("server"))
+            parseServer(serv_temp);
+        nb_serv++;
+        _current++;
     }
     servers.push_back(serv_temp);
     return ;
@@ -56,12 +56,7 @@ void    Parser::parseServer(Server & serv_temp)
         else if(_current->type == Block && match("location"))
             parseLocation(serv_temp);
     }
-    return ;
-}
-
-void    Parser::parseLocation(Server & serv_temp)
-{
-    (void)serv_temp;
+    checkEOF();
     return ;
 }
 
@@ -91,6 +86,103 @@ void    Parser::parseServDirective(Server & serv_temp)
             advanceAndCheck();
         }
     }
+    if (!expect(Semicolon))
+        throw std::invalid_argument(tokenErr("expected \";\" at the end of directive", *peek(-1)));
+    return ;
+}
+
+
+/*********Parsing Location*********/
+
+
+void    Parser::parseLocation(Server & serv_temp)
+{
+    advanceAndCheck();
+    if (_current->type != String)
+        throw std::invalid_argument(tokenErr("expected path after location", *peek(-1)));
+    if (_current->value[0] != '/')
+        throw std::invalid_argument(tokenErr("invalid URI", *_current));
+    if (_current->value[_current->value.length() - 1] == '/')
+        parseLocDir(serv_temp);
+    else
+        parseLocFile(serv_temp);
+    return ;
+}
+
+void    Parser::parseLocFile(Server & serv_temp)
+{
+    Location loca_dir;
+    Location loca_file;
+
+    loca_dir.setBaseUri(_current->value + "/");
+    loca_dir.setUrl("." + _current->value + "/");
+    loca_file.setBaseUri(_current->value);
+    loca_file.setUrl("." + _current->value);
+    advanceAndCheck();
+    if (!expect(OpenBrace))
+        throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
+    while (_current->type != CloseBrace && _current != _tokens.end())
+    {
+        if (_current->type == OpenBrace || _current->type == Semicolon)
+            throw std::invalid_argument(tokenErr("invalid delimiter \"" + _current->value + "\"", *_current));
+        else if (_current->type == String)
+            throw std::invalid_argument(tokenErr("invalid server directive", *_current));
+        else if (_current->type == Identifier)
+            parseLocaDirective(loca_dir, loca_file);
+    }
+    loca_dir.setIndex(loca_dir.getUrl() + loca_dir.getIndex());
+    loca_file.setIndex(loca_file.getUrl() + loca_file.getIndex());
+    serv_temp.addLocation(loca_dir.getBaseUri(), loca_dir);
+    serv_temp.addLocation(loca_file.getBaseUri(), loca_file);
+    checkEOF();
+}
+
+
+void    Parser::parseLocDir(Server & serv_temp)
+{
+    (void)serv_temp;
+}
+
+void    Parser::parseLocaDirective(Location & loca_dir, Location & loca_file)
+{
+    std::string value = _current->value;
+    if (match("alias") || match("index"))
+    {
+        advanceAndCheck();
+        if (_current->type != String)
+            throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
+        if (value == "alias")
+        {
+            if (_current->value[0] != '/')
+                throw std::invalid_argument(tokenErr("invalid uri for alias", *_current));
+            std::string alias = _current->value;
+            if (alias[alias.length() - 1] != '/')
+                alias.push_back('/');
+            loca_dir.setAlias(alias);
+            loca_file.setAlias(alias);
+            loca_dir.setUrl("." + alias);
+            loca_file.setUrl("." + alias);
+        }
+        else if (value == "index")
+        {
+            loca_file.setIndex(_current->value);
+        }
+        advanceAndCheck();
+        if (_current->type == String)
+            throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
+    }
+    // else if (match("index"))
+    // {
+    //     advanceAndCheck();
+    //     if (_current->type != String)
+    //         throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
+    //     while (_current->type == String)
+    //     {
+    //         if (value == "server_name")
+    //             serv_temp.addName(_current->value);
+    //         advanceAndCheck();
+    //     }
+   // }
     if (!expect(Semicolon))
         throw std::invalid_argument(tokenErr("expected \";\" at the end of directive", *peek(-1)));
     return ;
@@ -143,6 +235,22 @@ std::string Parser::parseIP(std::string value)
         || std::count(value.begin(), value.end(), '.') != 3
         || value.empty())
         throw std::invalid_argument(tokenErr("invalid IP address", *_current));
+    size_t  pos = 0;
+    long    test;
+    int     i = 0;
+    std::string buf;
+    std::string temp = value;
+    while (i < 4) {
+        pos = temp.find('.');
+        buf = temp.substr(0, pos);
+        if (buf.empty())
+            throw std::invalid_argument(tokenErr("invalid IP address", *_current));
+        test = strtol(buf.c_str(), NULL, 10);
+        if (errno == ERANGE | test < 0 | test > 255)
+            throw std::invalid_argument(tokenErr("invalid IP address", *_current));
+        temp.erase(0, pos + 1);
+        i++;
+    }
     return (value);
 }
 

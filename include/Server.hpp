@@ -16,16 +16,24 @@ class   Server
 
         void        addName(const std::string & name);
 
-        void        setHost(const std::string & host);
-        void        setIndex(const std::string & index);
-        void        setPort(const uint16_t & port);
-        void        setIP(const std::string & ip);
+        void            setHost(const std::string & host);
+        void            setIndex(const std::string & index);
+        void            setPort(const uint16_t & port);
+        void            setIP(const std::string & ip);
+
+        std::string     getRoot(void) const;
+        uint16_t        getPort(void) const;
+        std::string     getIP(void) const;
+        location_map    getLocaMap(void) const;    
+
+        void        printServNames(void) const;
 
         void        addLocation(const std::string & name, const Location & location);
 
     private:
     
         std::vector<std::string>    _serverName;
+        std::string                 _serverRoot;
         std::string                 _serverHost;
         std::string                 _serverIndex;
         std::string                 _serverIP;

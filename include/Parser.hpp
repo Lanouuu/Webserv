@@ -20,9 +20,12 @@ class   Parser : public Lexer
         std::vector<t_token>::iterator  _current;
 
         void            parseServer(Server & serv_temp);
-        void            parseLocation(Server & serv_temp);
         void            parseServDirective(Server & serv_temp);
+        void            parseLocation(Server & serv_temp);
+        void            parseLocFile(Server & serv_temp);
+        void            parseLocDir(Server & serv_temp);
         void            parseLocaDirective(Location & loca_temp);
+        void            parseLocaDirective(Location & loca_dir, Location & loca_file);
         void            parsePort(Server & serv_temp, std::string & value);
         std::string     parseIP(std::string value);
 

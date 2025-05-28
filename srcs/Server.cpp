@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Server::Server(void)
+Server::Server(void) : _serverRoot("./")
 {
     return ;
 }
@@ -47,9 +47,39 @@ void    Server::setIP(const std::string & ip)
     return ;
 }
 
+std::string Server::getRoot(void) const
+{
+    return (this->_serverRoot);
+}
+
+uint16_t    Server::getPort(void) const
+{
+    return (this->_serverPort);
+}
+        
+std::string Server::getIP(void) const
+{
+    return (this->_serverIP);
+}
+
+location_map    Server::getLocaMap(void) const
+{
+    return (this->_serverLocations);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
+
+void    Server::printServNames(void) const
+{
+    std::cout
+        << "Server_name = " << std::flush;
+    for (std::vector<std::string>::const_iterator it = _serverName.begin(); it != _serverName.end(); it++)
+        std::cout << (*it) << " " << std::flush;
+    std::cout << std::endl;
+    return ;
+}
 
 void    Server::addName(const std::string & name)
 {

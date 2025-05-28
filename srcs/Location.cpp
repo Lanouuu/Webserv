@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Location::Location(void)
+Location::Location(void) : _locationRoot("./"), _locationIndex("index.html")
 {
     return ;
 }
@@ -40,6 +40,18 @@ Location &  Location::operator=(const Location & rhs)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
+void    Location::setBaseUri(const std::string & uri)
+{
+    this->_locationBaseUri = uri;
+    return ;
+}
+
+void    Location::setUrl(const std::string & url)
+{
+    this->_locationUrl = url;
+    return ;
+}
+
 void    Location::setAlias(const std::string & alias)
 {
     this->_locationAlias = alias;
@@ -57,6 +69,22 @@ void    Location::setUpload(const std::string & path)
     this->_locationUpload = path;
     return ;
 }
+
+std::string Location::getUrl(void) const
+{
+    return (this->_locationUrl);
+}
+
+std::string Location::getIndex(void) const
+{
+    return (this->_locationIndex);
+}
+
+std::string Location::getBaseUri(void) const
+{
+    return (this->_locationBaseUri);
+}
+
 
 /****************************************************************************/
 /*                           Members Functions                              */
