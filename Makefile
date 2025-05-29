@@ -21,12 +21,15 @@ END				=	\033[0m
 SOURCES_PATH	=	./srcs/
 
 SOURCES_MAIN	= 	main.cpp \
-						Server.cpp \
-						Location.cpp \
+						
 						
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 					parsing/parsing_conf/Lexer.cpp \
 					parsing/parsing_conf/Parser.cpp \
+
+SOURCES_SERVER	=	server/launch_server.cpp \
+						server/Server.cpp \
+						server/Location.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -38,6 +41,7 @@ OBJECTS_PATH	=	objs/
 
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -52,6 +56,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}parsing.hpp \
 					${INC_PATH}Lexer.hpp \
 					${INC_PATH}Parser.hpp \
+					${INC_PATH}server.h \
 
 # **************************************************************************** #
 #                                                                              #

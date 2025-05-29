@@ -92,3 +92,28 @@ void    Server::addLocation(const std::string & name, const Location & location)
     this->_serverLocations.insert(std::make_pair(name, location));
     return ;
 }
+
+void    Server::fillStruct(void)
+{
+    _serverSa.sin_family = AF_INET;
+    _serverSa.sin_port = htons(_serverPort);
+    _serverSa.sin_addr.s_addr = INADDR_ANY;
+    return ;
+}
+
+void    Server::fillSocket(void)
+{
+    _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (_serverSocket == -1)
+        throw std::invalid_argument("Error: " + static_cast<std::string>(strerror(errno)));
+    return ;
+}
+
+void    Server::launchServer(void)
+{
+    if (bind(_serverSocket, (struct sockaddr *)&_serverSa, sizeof(_serverSa)) == -1)
+        throw std::invalid_argument(RED "Error bind: " END + static_cast<std::string>(strerror(errno)));
+    if (listen(_serverSocket, 4096) == -1)
+        throw std::invalid_argument(RED "Error listen: " END + static_cast<std::string>(strerror(errno)));
+    return ;
+}

@@ -12,6 +12,8 @@
 # include <algorithm>
 # include <vector>
 # include <set>
+# include <exception>
+# include <errno.h>
 
 typedef struct s_token
 {

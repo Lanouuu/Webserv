@@ -1,9 +1,15 @@
 #ifndef LOCATION_HPP
 # define LOCATION_HPP
 
+# define GREEN 	"\033[0;32m"
+# define RED	"\033[0;31m"
+# define BLUE	"\033[0;36m"
+# define END	"\033[0m"
+
 # include <iostream>
 # include <vector>
 # include <exception>
+# include <errno.h>
 
 class   Location
 {

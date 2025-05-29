@@ -3,6 +3,10 @@
 
 # include <inttypes.h>
 # include <map>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <sys/socket.h>
+# include <string.h>
 # include "Location.hpp"
 
 typedef std::map<std::string, Location> location_map;
@@ -14,8 +18,6 @@ class   Server
         Server(void);
         ~Server(void);
 
-        void        addName(const std::string & name);
-
         void            setHost(const std::string & host);
         void            setIndex(const std::string & index);
         void            setPort(const uint16_t & port);
@@ -26,9 +28,15 @@ class   Server
         std::string     getIP(void) const;
         location_map    getLocaMap(void) const;    
 
-        void        printServNames(void) const;
+        void            printServNames(void) const;
 
-        void        addLocation(const std::string & name, const Location & location);
+        void            addName(const std::string & name);
+        void            addLocation(const std::string & name, const Location & location);
+
+        void            fillStruct(void);
+        void            fillSocket(void);
+
+        void            launchServer(void);
 
     private:
     
@@ -39,6 +47,8 @@ class   Server
         std::string                 _serverIP;
         uint16_t                    _serverPort;
         location_map                _serverLocations;
+        sockaddr_in                 _serverSa;
+        int                         _serverSocket;
 };
 
 #endif
