@@ -26,10 +26,10 @@ int main(int ac, char **av, char **env)
             /*
                 boucle for (parcourir le tableau epoll_event events) 
                 {
-                    int fd = events[i].data.fd;
+                    int fd = events[i].data.fd-> correspond a la socket du server;
                     si (events[i].events & EPOLLIN) {
                         Client temp;
-                        temp._clientFd = accept(fd, struct client_addr, client_addr_len);
+                        temp._clientFd = accept(fd, struct client_addr, client_addr_len); -> utiliser le setter .setFd();
                         clients.insert(temp); inserer le nouveau client dans la map de client
                     }
                 }
