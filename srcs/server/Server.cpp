@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Server::Server(void) : _serverRoot("./")
+Server::Server(void) : _serverRoot("./"), _serverSocket(-1)
 {
     return ;
 }
@@ -105,15 +105,18 @@ void    Server::fillSocket(void)
 {
     _serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (_serverSocket == -1)
-        throw std::invalid_argument("Error: " + static_cast<std::string>(strerror(errno)));
+        throw std::runtime_error(RED "Error: socket: " END + std::string(strerror(errno)));
     return ;
 }
 
-void    Server::launchServer(void)
+void    Server::launchServer(int & epoll_fd)
 {
     if (bind(_serverSocket, (struct sockaddr *)&_serverSa, sizeof(_serverSa)) == -1)
-        throw std::invalid_argument(RED "Error bind: " END + static_cast<std::string>(strerror(errno)));
+        throw std::runtime_error(RED "Error: bind: " END + std::string(strerror(errno)));
     if (listen(_serverSocket, 4096) == -1)
-        throw std::invalid_argument(RED "Error listen: " END + static_cast<std::string>(strerror(errno)));
+        throw std::runtime_error(RED "Error: listen: " END + std::string(strerror(errno)));
+    struct epoll_event  event = {.events = EPOLLIN, .data.fd = _serverSocket};
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
+        throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
     return ;
 }

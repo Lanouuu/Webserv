@@ -9,6 +9,12 @@ Client::Client(void) : _clientFd(-1)
     return ;
 }
 
+Client::Client(const Client & src)
+{
+    *this = src;
+    return ;
+}
+
 Client::~Client(void)
 {
     return ;
@@ -18,6 +24,11 @@ Client::~Client(void)
 /*                               Operators                                  */
 /****************************************************************************/
 
+Client &    Client::operator=(const Client & rhs)
+{
+    this->_clientFd = rhs._clientFd;
+    return (*this);
+}
 
 /****************************************************************************/
 /*                           Getters / Setters                              */

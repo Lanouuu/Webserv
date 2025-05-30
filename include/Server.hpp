@@ -6,6 +6,7 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <sys/socket.h>
+# include <sys/epoll.h>
 # include <string.h>
 # include "Location.hpp"
 
@@ -36,7 +37,7 @@ class   Server
         void            fillStruct(void);
         void            fillSocket(void);
 
-        void            launchServer(void);
+        void            launchServer(int & epoll_fd);
 
     private:
     

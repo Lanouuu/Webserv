@@ -6,7 +6,7 @@ CC				=	c++
 
 GREEN			=	\033[0;32m
 
-PURPLE 			=	\033[10;95m
+PURPLE			=	\033[10;95m
 
 YELLOW			=	\033[0;33m
 
@@ -24,12 +24,14 @@ SOURCES_MAIN	= 	main.cpp \
 						
 						
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
-					parsing/parsing_conf/Lexer.cpp \
-					parsing/parsing_conf/Parser.cpp \
+						parsing/parsing_conf/Lexer.cpp \
+						parsing/parsing_conf/Parser.cpp \
 
-SOURCES_SERVER	=	server/launch_server.cpp \
+SOURCES_SERVER	=	server/launch_servers.cpp \
 						server/Server.cpp \
 						server/Location.cpp \
+
+SOURCES_CLIENT	=	client/Client.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -42,6 +44,7 @@ OBJECTS_PATH	=	objs/
 OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CLIENT:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -52,8 +55,8 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 INC_PATH		=	./include/
 
 INCLUDES		=	${INC_PATH}Server.hpp \
+					${INC_PATH}Client.hpp \
 					${INC_PATH}Location.hpp \
-					${INC_PATH}parsing.hpp \
 					${INC_PATH}Lexer.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
@@ -71,10 +74,13 @@ ${NAME}: ${OBJECTS} ${INCLUDES}
 	@echo "${GREEN}\33[2K\nwebserv compiled with : \n${END}"
 	@echo "	${CC} ${CFLAGS}\n"
 	@printf "$(PURPLE)"
-	@echo "	\ \      / /__| |__  ___  ___ _ ____   __ "
-	@echo "	 \ \ /\ / / _ \  _ \/ __|/ _ \ '__\ \ / / " 
-	@echo "	  \ V  V /  __/ |_) \__ \  __/ |   \ V /  " 
-	@echo "	   \_/\_/ \___|_.__/|___/\___|_|    \_/   "
+	@echo "\ \      / /__| |__  ___  ___ _ ____   __ "
+	@echo " \ \ /\ / / _ \  _ \/ __|/ _ \ '__\ \ / / " 
+	@echo "  \ V  V /  __/ |_) \__ \  __/ |   \ V /  " 
+	@echo "   \_/\_/ \___|_.__/|___/\___|_|    \_/   "
+	@echo "\n"
+	@echo "© 2025 Webserv, Inc. aciezadl - jaung - ade-fran"
+	@echo "\n"
 	@printf "${COLOUR_END}"
 
 ${OBJECTS_PATH}%.o:	${SOURCES_PATH}%.cpp

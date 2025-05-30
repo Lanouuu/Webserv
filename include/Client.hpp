@@ -1,22 +1,27 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-class Client;
-typedef std::map<std::string, Client>   client_map;
+#include <iostream>
+#include <map>
 
 class   Client
 {
     public:
 
         Client(void);
+        Client(const Client & src);
         ~Client(void);
 
-        void    setFd(const int & fd);
+        Client &    operator=(const Client & rhs);
+
+        void        setFd(const int & fd);
 
     private:
 
         int _clientFd;
 
 };
+
+typedef std::map<std::string, Client>   client_map;
 
 #endif
