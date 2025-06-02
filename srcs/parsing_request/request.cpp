@@ -376,26 +376,26 @@ int Request::parse_request(std::string const &req) {
                 return 400;
             }
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
-            std::cout << "boundary = " << boundary << std::endl;
-            std::cout << "boundary size = " << boundary.size() << std::endl;
+            // std::cout << "boundary = " << boundary << std::endl;
+            // std::cout << "boundary size = " << boundary.size() << std::endl;
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
                 return 400;
             std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (end == _body.end())
             {
-                std::cout << "OK" << std::endl;
+                // std::cout << "OK" << std::endl;
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
                         boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
-                    std::cout << "end boudary = " << boundary << std::endl;
+                    // std::cout << "end boudary = " << boundary << std::endl;
                     break;
                 }
                 end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             }
-            std::cout << "End = " << *end << std::endl;
+            // std::cout << "End = " << *end << std::endl;
             size_t boundary_pos = end - _body.begin();
             begin += boundary.size();
             for (;begin != end; begin++)
@@ -408,12 +408,12 @@ int Request::parse_request(std::string const &req) {
             //upload
             const char keyword[] = {"Content-Disposition: form-data; name=\"filename\"; filename="};
             begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
-            std::cout << "begin = " << begin - line.begin() << std::endl;
+            // std::cout << "begin = " << begin - line.begin() << std::endl;
             if (begin != line.end())
             {
                 const char pos[] = {'\r'};
                 end = std::search(line.begin(), line.end(), pos, pos + sizeof(pos));
-                std::cout << "end = " << end - line.begin() << std::endl;
+                //std::cout << "end = " << end - line.begin() << std::endl;
                 if (end != line.end())
                 {
                     for (std::vector<char>::const_iterator it = line.begin() + 58; it != end; it++)
@@ -421,7 +421,7 @@ int Request::parse_request(std::string const &req) {
                     filename.erase(0, 1);
                     filename.erase(filename.size() - 1, 1);
                     std::cout << "Filename = " << filename << std::endl;
-                    std::cout << "END" << std::endl;
+                   // std::cout << "END" << std::endl;
                 }
             }
             else
@@ -432,19 +432,19 @@ int Request::parse_request(std::string const &req) {
 
 
             begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            std::cout << "boudary = " << boundary << std::endl;
-            std::cout << "begin = " << begin - _body.begin() << std::endl;
+            // std::cout << "boudary = " << boundary << std::endl;
+            // std::cout << "begin = " << begin - _body.begin() << std::endl;
             end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            std::cout << "end = " << end - _body.begin() << std::endl;
+           // std::cout << "end = " << end - _body.begin() << std::endl;
             if (end != _body.end())
             {
-                std::cout << "OK" << std::endl;
+               // std::cout << "OK" << std::endl;
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
                         boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
-                    std::cout << "end boudary = " << boundary << std::endl;
+                   // std::cout << "end boudary = " << boundary << std::endl;
                     break;
                 }
                 end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
@@ -458,7 +458,7 @@ int Request::parse_request(std::string const &req) {
             begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
             if (begin != line.end())
             {
-                std::cout << "pos = " << pos << std::endl;
+               // std::cout << "pos = " << pos << std::endl;
                 for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
                 {
                     content_type += *it;
@@ -476,7 +476,7 @@ int Request::parse_request(std::string const &req) {
             {
                 for (std::vector<char>::const_iterator it = begin + 4; it != line.end() - boundary.size() - 3; it++)
                     content += *it;
-                std::cout << "pos = " << pos << std::endl;
+                // std::cout << "pos = " << pos << std::endl;
                 std::cout << "content = " << content << std::endl;
             }
             else
