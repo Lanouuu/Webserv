@@ -16,6 +16,8 @@ class   Client
 
         void        setFd(const int & fd);
 
+        int         getClientFd(void);
+
     private:
 
         int _clientFd;

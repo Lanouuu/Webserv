@@ -115,7 +115,9 @@ void    Server::launchServer(int & epoll_fd)
         throw std::runtime_error(RED "Error: bind: " END + std::string(strerror(errno)));
     if (listen(_serverSocket, 4096) == -1)
         throw std::runtime_error(RED "Error: listen: " END + std::string(strerror(errno)));
-    struct epoll_event  event = {.events = EPOLLIN, .data.fd = _serverSocket};
+    struct epoll_event  event;
+    event.events = EPOLLIN;
+    event.data.fd = _serverSocket;
     if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
         throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
     return ;

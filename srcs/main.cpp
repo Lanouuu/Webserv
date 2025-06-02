@@ -2,6 +2,7 @@
 
 int main(int ac, char **av, char **env)
 {
+    (void)env;
     try
     {
         if (ac > 2)
@@ -14,26 +15,33 @@ int main(int ac, char **av, char **env)
         int         epoll_fd;
         int         n_event;
 
-        if (epoll_fd = epoll_create1(0) == -1);
+        if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
         parsingConfFile(av[1], servers);
         launchServers(servers, epoll_fd);
         struct epoll_event events[MAX_EVENTS]; // tableau d'event
         while (1)
         {
-            if(n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1) == -1)
+            if((n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1)) == -1)
                 throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
-            /*
-                boucle for (parcourir le tableau epoll_event events) 
-                {
-                    int fd = events[i].data.fd-> correspond a la socket du server;
-                    si (events[i].events & EPOLLIN) {
-                        Client temp;
-                        temp._clientFd = accept(fd, struct client_addr, client_addr_len); -> utiliser le setter .setFd();
-                        clients.insert(temp); inserer le nouveau client dans la map de client
-                    }
+            
+            for (int i = 0; i < n_event; i++) 
+            {
+                int fd = events[i].data.fd; // -> correspond a la socket du server;
+                if (events[i].events & EPOLLIN) {
+                    Client temp;
+                    struct sockaddr_in clientInfo;
+                    socklen_t size = sizeof(clientInfo);
+                    temp.setFd(accept(fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
+                    // clients.insert(temp); //inserer le nouveau  client dans la map de client
+                    char request[4096] = {0};
+                    char buf[255] = {0};
+                    memset(&buf, 0, 255);
+                    recv(temp.getClientFd(), buf, 255, 0);
+                    memmove(request, buf, sizeof(buf));
+                    // Parsing requete
                 }
-            */
+            }
         }
     }
     catch(const std::exception& e)
