@@ -32,14 +32,14 @@ int main(int ac, char **av, char **env)
                     Client temp;
                     struct sockaddr_in clientInfo;
                     socklen_t size = sizeof(clientInfo);
-                    temp.setFd(accept(fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
-                    // clients.insert(temp); //inserer le nouveau  client dans la map de client
-                    char request[4096] = {0};
+                    temp.setFd(accept(fd, (struct sockaddr *)&clientInfo, &size));
                     char buf[255] = {0};
+                    char request[4096] = {0};
                     memset(&buf, 0, 255);
                     recv(temp.getClientFd(), buf, 255, 0);
                     memmove(request, buf, sizeof(buf));
                     // Parsing requete
+                    // clients.insert(temp); //inserer le nouveau  client dans la map de client
                 }
             }
         }
