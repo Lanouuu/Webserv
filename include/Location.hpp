@@ -31,7 +31,7 @@ class   Location
         std::string getUrl(void) const;
         std::string getIndex(void) const;
 
-        void    addMethod(const std::string & method);
+        void        addMethod(const std::string & method);
 
     private:
     
