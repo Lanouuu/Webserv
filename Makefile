@@ -26,7 +26,7 @@ SOURCES_MAIN	= 	main.cpp \
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 						parsing/parsing_conf/Lexer.cpp \
 						parsing/parsing_conf/Parser.cpp \
-						parsing_request/request.cpp \
+						parsing/parsing_request/request.cpp \
 
 SOURCES_SERVER	=	server/launch_servers.cpp \
 						server/Server.cpp \
