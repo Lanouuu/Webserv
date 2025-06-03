@@ -49,3 +49,9 @@ int         Client::getClientFd(void)
 {
     return _clientFd;
 }
+
+
+Request &   Client::getRequest(void)
+{
+    return _request;
+}

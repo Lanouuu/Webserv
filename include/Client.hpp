@@ -1,8 +1,7 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-#include <iostream>
-#include <map>
+#include "request.hpp"
 
 class   Client
 {
@@ -17,10 +16,13 @@ class   Client
         void        setFd(const int & fd);
 
         int         getClientFd(void);
+        Request &   getRequest(void);
 
     private:
 
         int _clientFd;
+        Request _request;
+
 
 };
 
