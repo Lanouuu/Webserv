@@ -39,7 +39,9 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 #                                                                              #
 # **************************************************************************** #
 
-INCLUDES		= ${SOURCES_PATH}parsing_request/request.hpp
+INC_PATH		= include/
+
+INCLUDES		= ${INC_PATH}request.hpp
 
 # **************************************************************************** #
 #                                                                              #
