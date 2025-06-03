@@ -33,13 +33,28 @@ int main(int ac, char **av, char **env)
                     struct sockaddr_in clientInfo;
                     socklen_t size = sizeof(clientInfo);
                     temp.setFd(accept(fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
+                    int flag = fcntl(temp.getClientFd(), F_SETFL, fcntl(temp.getClientFd(), F_GETFL, 0), O_NONBLOCK);
+                    flag |= O_NONBLOCK;
+                    fcntl(temp.getClientFd(), F_SETFL, flag);
                     // clients.insert(temp); //inserer le nouveau  client dans la map de client
                     char buf[255] = {0};
-                    memset(&buf, 0, 255);
-                    recv(temp.getClientFd(), buf, 255, 0);
-                    temp.getRequest().add_request(buf, sizeof(buf));
+                    size_t readed = 1;
+                    while (readed > 0)
+                    {
+                        memset(&buf, 0, 255);
+                        readed = recv(temp.getClientFd(), buf, 255, 0);
+                        if (errno == EWOULDBLOCK)
+                        {
+                            std::cout << "Break" << std::endl;
+                            break;
+                        }
+                        std::cout << "readed = " << readed << std::endl;
+                        temp.getRequest().add_request(buf, sizeof(buf));
+                        std::cout << buf << std::endl;
+                    }
+                    std::cout << "HERE" << std::endl;
                     // Parsing requete
-                    if (temp.getRequest().parse_request() != 0)
+                    // if (temp.getRequest().parse_request(temp.getRequest().getRequest()) != 0)
                 }
             }
         }

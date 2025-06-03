@@ -36,6 +36,11 @@ std::string Request::get_host() {
     return _host;
 }
 
+std::vector<char> & Request::getRequest()
+{
+    return _request;
+}
+
 void Request::get_body() {
     for (size_t i = 0; i < _body.size(); i++)
         std::cout << _body[i];

@@ -1,6 +1,6 @@
 NAME			=	webserv
 
-CFLAGS			=	-Wall -Wextra -Werror -I ${INC_PATH} -std=c++98
+CFLAGS			=	-Wall -Wextra -Werror -I ${INC_PATH} -g3 -std=c++98
 
 CC				=	c++
 

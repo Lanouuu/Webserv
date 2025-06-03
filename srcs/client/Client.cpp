@@ -45,7 +45,7 @@ void    Client::setFd(const int & fd)
 /****************************************************************************/
 
 
-int         Client::getClientFd(void)
+int  &      Client::getClientFd(void)
 {
     return _clientFd;
 }

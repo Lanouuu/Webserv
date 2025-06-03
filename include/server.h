@@ -5,6 +5,8 @@
 
 # include <sys/socket.h>
 # include <netdb.h>
+# include <unistd.h>
+# include <fcntl.h>
 # include "Client.hpp"
 # include "Server.hpp"
 # include "Parser.hpp"
