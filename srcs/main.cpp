@@ -54,6 +54,7 @@ int main(int ac, char **av, char **env)
                     }
                     std::cout << "HERE" << std::endl;
                     // Parsing requete
+                    temp.getRequest().parse_request(temp);
                     // if (temp.getRequest().parse_request(temp.getRequest().getRequest()) != 0)
                 }
             }
