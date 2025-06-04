@@ -1,4 +1,4 @@
-#include "request.hpp"
+#include "Client.hpp"
 
 Request::Request() {
 
@@ -58,10 +58,24 @@ std::string Request::get_content_length() {
 //check si on a bien \r\n a la fin des lignes de la requete get, return error 1
 int Request::check_request_format_get(std::string const &req) {
     std::string end;
-    end = req.substr(req.size() - 4, 4);
-    if(end != "\r\n\r\n")
+    std::cout << "req ici = " << req << std::endl;
+    end = req.substr(req.find("\r\n\r\n"), 4);
+    std::cout << "size - 4 = " << req.size() - 4 << std::endl;
+    std::cout << "pos = "<< req.find("\r\n\r\n") << std::endl;
+    if (req.size() < 4)
+    {
+        std::cout << "error size" << std::endl;
         return 1;
-    for(std::string::const_iterator it = req.end() - 4; it != req.begin(); it--)
+    }
+    for (size_t i = 0; i < end.size(); ++i)
+        std::cout << "char[" << i << "] = " << static_cast<int>(end[i]) << std::endl;
+    if(end != "\r\n\r\n")
+    {
+        std::cout << "end = " << end;
+        std::cout << "ici" << std::endl;
+        return 1;
+    }
+    for(std::string::const_iterator it = req.end() - req.find("\r\n\r\n"); it != req.begin(); it--)
     {
         if(*it == '\n' && *(it - 1) != '\r' )
             return 1;
@@ -239,15 +253,28 @@ void Request::decode_content() {
     std::cout << "body content = " << _body_data.find("Content")->second.c_str() << std::endl; 
 }
 
-int Request::parse_request(std::string const &req) {
+std::string Request::convert_to_string() {
+    std::string res;
+    for(std::vector<char>::iterator i = _request.begin(); i != _request.end(); i++) {
+        res += *i;
+    }
+    return res;
+}
+
+int Request::parse_request(Client & client) {
     std::string line;
     std::string word;
     int succes_code = 0;
-    std::istringstream buf(req.c_str());
+    std::string req;
+    req = convert_to_string();
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
-        return 400;
+    {
+        std::cout << "return 400" << std::endl;
+        return 400; 
+    }
     if(req.compare(0, 4, "POST") == 0 && check_request_format_post() == 1 && check_request_format_post_multi() == 1)
         return 400;
+    std::istringstream buf(req.c_str());
     while (std::getline(buf, line) )
     {
         std::string methods[] = {"GET", "POST", "DELETE", "Accept", "Accept-Language", "Accept-Encoding", "Connection", "Host", "Content-Type", "Content-Length"};
@@ -552,8 +579,8 @@ int Request::parse_request(std::string const &req) {
     std::string response;
     response = create_response(succes_code);
     std::cout << "response : " << response << std::endl;
-    // send(client_fd, response.c_str(), response.length(), 0);
-    // close(client_fd);
+    send(client.getClientFd(), response.c_str(), response.length(), 0);
+    close(client.getClientFd());
     return 0;
 }
 
@@ -673,7 +700,10 @@ int Request::set_body()
             _body.push_back(*it);
     }
     else
+    {
+        std::cout << "set body error" << std::endl;
         return 1;
+    }
     return 0;
 }
 
@@ -693,7 +723,13 @@ std::string get_file_type(const std::string& path) {
 std::string Request::create_response(int succes_code) {
     std::string root_path = "./";
     std::ostringstream response;
+    std::cout << "url = " << _url << std::endl;
+    if(_url == "/")
+        _url = "srcs/www/index.html";
+    // else if(_url == "/favicon.ico")
+    //     _url = "/srcs/images/icon/favicon.ico";
     std::ifstream file(_url.c_str(), std::ios::binary);
+    std::cout << "File = " << _url << std::endl;
     if (!file) {
         return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
     }
@@ -703,8 +739,7 @@ std::string Request::create_response(int succes_code) {
         ss << file.rdbuf();
         std::string body = ss.str();
         if (succes_code == 200)
-        {
-            
+        {     
             response << "HTTP/1.1 200 OK\r\n";
             response << "Content-Type: " << get_file_type(_url) << "\r\n";
             response << "Content-Length: " << body.size() << "\r\n";
