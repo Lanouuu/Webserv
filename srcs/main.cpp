@@ -27,12 +27,12 @@ int main(int ac, char **av, char **env)
             
             for (int i = 0; i < n_event; i++) 
             {
-                int fd = events[i].data.fd; // -> correspond a la socket du server;
+                int socket_fd = events[i].data.fd; // -> correspond a la socket du server;
                 if (events[i].events & EPOLLIN) {
                     Client temp;
                     struct sockaddr_in clientInfo;
                     socklen_t size = sizeof(clientInfo);
-                    temp.setFd(accept(fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
+                    temp.setFd(accept(socket_fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
                     int flag = fcntl(temp.getClientFd(), F_SETFL, fcntl(temp.getClientFd(), F_GETFL, 0), O_NONBLOCK);
                     flag |= O_NONBLOCK;
                     fcntl(temp.getClientFd(), F_SETFL, flag);
