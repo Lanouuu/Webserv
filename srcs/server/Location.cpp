@@ -4,8 +4,9 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Location::Location(void) : _locationRoot("./"), _locationIndex("index.html")
+Location::Location(void) : _locationRoot("./")
 {
+    this->_locationIndex.push_back("index.html");
     return ;
 }
 
@@ -61,12 +62,6 @@ void    Location::setAlias(const std::string & alias)
     return ;
 }
 
-void    Location::setIndex(const std::string & index)
-{
-    this->_locationIndex = index;
-    return ;
-}
-
 void    Location::setUpload(const std::string & path)
 {
     this->_locationUpload = path;
@@ -78,14 +73,14 @@ std::string Location::getUrl(void) const
     return (this->_locationUrl);
 }
 
-std::string Location::getIndex(void) const
-{
-    return (this->_locationIndex);
-}
-
 std::string Location::getBaseUri(void) const
 {
     return (this->_locationBaseUri);
+}
+
+std::string Location::getAlias(void) const
+{
+    return (this->_locationAlias);
 }
 
 
@@ -93,8 +88,34 @@ std::string Location::getBaseUri(void) const
 /*                           Members Functions                              */
 /****************************************************************************/
 
+void    Location::printIndexes(void) const
+{
+    std::cout
+        << "\t" << "Indexes = " << std::flush;
+    for (std::vector<std::string>::const_iterator it = _locationIndex.begin(); it != _locationIndex.end(); it++)
+        std::cout << (*it) << " " << std::flush;
+    std::cout << std::endl;
+    return ;
+}
+
 void    Location::addMethod(const std::string & method)
 {
     this->_locationMethod.push_back(method);
+    return ;
+}
+
+void    Location::addIndex(const std::string & index)
+{
+    this->_locationIndex.push_back(index);
+    return ;
+}
+
+void    Location::uploadIndex(const std::string & url)
+{
+    for (std::vector<std::string>::iterator it = _locationIndex.begin(); it != _locationIndex.end(); it++)
+    {
+        std::string buf = url + (*it);
+        (*it) = buf;
+    }
     return ;
 }
