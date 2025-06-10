@@ -10,6 +10,8 @@
 # include <vector>
 # include <exception>
 # include <errno.h>
+# include <algorithm>
+# include <limits>
 
 class   Location
 {
@@ -26,14 +28,16 @@ class   Location
         void        setAlias(const std::string & alias);
         void        setUpload(const std::string & path);
         void        setAutoIndex(const bool & autoindex);
+        void        setIsDirectory(const bool & isdirectory);
 
         std::string getBaseUri(void) const;
         std::string getUrl(void) const;
         std::string getAlias(void) const;
         bool        getAutoIndex(void) const;
+        bool        getIsDirectory(void) const;
 
         void        addMethod(const std::string & method);
-        void        addIndex(const std::string & index);
+        void        addIndex(const std::string & index, long flag_index);
 
         void        uploadIndex(const std::string & uri);
 
@@ -50,6 +54,7 @@ class   Location
         std::string                 _locationUpload;
         std::vector<std::string>    _locationMethod;
         bool                        _locationAutoIndex;
+        bool                        _isDirectory;
 
 };
 

@@ -24,19 +24,19 @@ Parser::~Parser(void)
 
 void    Parser::parseConf(serv_vector & servers)
 {
-    Server  serv_temp;
     int     nb_serv = 0;
-
+    
     while (_current != _tokens.end())
     {
+        Server  serv_temp;
         if (!match("server") && nb_serv == 0)
             throw std::invalid_argument(tokenErr("expected server block", *_current));
         else if (match("server"))
             parseServer(serv_temp);
         nb_serv++;
         _current++;
+        servers.push_back(serv_temp);
     }
-    servers.push_back(serv_temp);
     return ;
 }
 
@@ -135,7 +135,7 @@ void    Parser::parseLocFile(Server & serv_temp)
 
     loca_temp.setBaseUri(_current->value);
     loca_temp.setUrl("." + _current->value);
-    loca_temp.addIndex(_current->value.substr(_current->value.find_first_not_of('/'), _current->value.length()));
+    loca_temp.addIndex(_current->value.substr(_current->value.find_first_not_of('/'), _current->value.length()), 0);
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -162,6 +162,7 @@ void    Parser::parseLocDir(Server & serv_temp)
         _current->value.push_back('/');
     loca_temp.setBaseUri(_current->value);
     loca_temp.setUrl("." + _current->value);
+    loca_temp.setIsDirectory(true);
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -215,10 +216,19 @@ void    Parser::parseLocaDirective(Location & loca_temp)
         advanceAndCheck();
         if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
+        long flag_index = 0;
         while (_current->type == String)
         {
             if (value == "index")
-                loca_temp.addIndex(_current->value);
+            {
+                if (loca_temp.getIsDirectory())
+                {
+                    if (flag_index > std::numeric_limits<int>::max())
+                        throw std::invalid_argument(tokenErr("too many value", *_current));
+                    loca_temp.addIndex(_current->value, flag_index);
+                    ++flag_index;
+                }
+            }
             else if (value == "set_method")
             {
                 if (_current->value != "GET" && _current->value != "POST" && _current->value != "DELETE")

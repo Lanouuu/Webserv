@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Location::Location(void) : _locationRoot("./"), _locationAutoIndex(false)
+Location::Location(void) : _locationRoot("./"), _locationAutoIndex(false), _isDirectory(false)
 {
     this->_locationIndex.push_back("index.html");
     return ;
@@ -75,6 +75,12 @@ void    Location::setAutoIndex(const bool & autoindex)
     return ;
 }
 
+void    Location::setIsDirectory(const bool & isdirectory)
+{
+    this->_isDirectory = isdirectory;
+    return ;
+}
+
 std::string Location::getUrl(void) const
 {
     return (this->_locationUrl);
@@ -93,6 +99,11 @@ std::string Location::getAlias(void) const
 bool    Location::getAutoIndex(void) const
 {
     return (this->_locationAutoIndex);
+}
+
+bool    Location::getIsDirectory(void) const
+{
+    return (this->_isDirectory);
 }
 
 
@@ -129,8 +140,10 @@ void    Location::addMethod(const std::string & method)
     return ;
 }
 
-void    Location::addIndex(const std::string & index)
+void    Location::addIndex(const std::string & index, long flag_index)
 {
+    if (flag_index == 0)
+        this->_locationIndex.clear();
     this->_locationIndex.push_back(index);
     return ;
 }
