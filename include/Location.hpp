@@ -25,10 +25,12 @@ class   Location
         void        setUrl(const std::string & url);
         void        setAlias(const std::string & alias);
         void        setUpload(const std::string & path);
+        void        setAutoIndex(const bool & autoindex);
 
         std::string getBaseUri(void) const;
         std::string getUrl(void) const;
         std::string getAlias(void) const;
+        bool        getAutoIndex(void) const;
 
         void        addMethod(const std::string & method);
         void        addIndex(const std::string & index);
@@ -36,6 +38,7 @@ class   Location
         void        uploadIndex(const std::string & uri);
 
         void        printIndexes(void) const;
+        void        printMethod(void) const;
 
     private:
     
@@ -46,6 +49,7 @@ class   Location
         std::vector<std::string>    _locationIndex;
         std::string                 _locationUpload;
         std::vector<std::string>    _locationMethod;
+        bool                        _locationAutoIndex;
 
 };
 

@@ -30,9 +30,11 @@ class   Server
         location_map    getLocaMap(void) const;    
 
         void            printServNames(void) const;
+        void            printErrorPage(void) const;
 
         void            addName(const std::string & name);
         void            addLocation(const std::string & name, const Location & location);
+        void            addErrorPages(const int & pages);
 
         void            fillStruct(void);
         void            fillSocket(void);
@@ -45,11 +47,12 @@ class   Server
         std::string                 _serverRoot;
         std::string                 _serverHost;
         std::string                 _serverIndex;
+        std::vector<int>            _serverErrorPages;
         std::string                 _serverIP;
         uint16_t                    _serverPort;
         location_map                _serverLocations;
         sockaddr_in                 _serverSa;
         int                         _serverSocket;
 };
-
+  
 #endif

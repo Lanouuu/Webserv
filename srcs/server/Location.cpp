@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Location::Location(void) : _locationRoot("./")
+Location::Location(void) : _locationRoot("./"), _locationAutoIndex(false)
 {
     this->_locationIndex.push_back("index.html");
     return ;
@@ -36,6 +36,7 @@ Location &  Location::operator=(const Location & rhs)
         this->_locationIndex = rhs._locationIndex;
         this->_locationUpload = rhs._locationUpload;
         this->_locationMethod = rhs._locationMethod;
+        this->_locationAutoIndex = rhs._locationAutoIndex;
     }
     return (*this);
 }
@@ -68,6 +69,12 @@ void    Location::setUpload(const std::string & path)
     return ;
 }
 
+void    Location::setAutoIndex(const bool & autoindex)
+{
+    this->_locationAutoIndex = autoindex;
+    return ;
+}
+
 std::string Location::getUrl(void) const
 {
     return (this->_locationUrl);
@@ -83,6 +90,11 @@ std::string Location::getAlias(void) const
     return (this->_locationAlias);
 }
 
+bool    Location::getAutoIndex(void) const
+{
+    return (this->_locationAutoIndex);
+}
+
 
 /****************************************************************************/
 /*                           Members Functions                              */
@@ -95,6 +107,19 @@ void    Location::printIndexes(void) const
     for (std::vector<std::string>::const_iterator it = _locationIndex.begin(); it != _locationIndex.end(); it++)
         std::cout << (*it) << " " << std::flush;
     std::cout << std::endl;
+    return ;
+}
+
+void    Location::printMethod(void) const
+{
+    if (!_locationMethod.empty())
+    {
+        std::cout
+            << "\t" << "Methods = " << std::flush;
+        for (std::vector<std::string>::const_iterator it = _locationMethod.begin(); it != _locationMethod.end(); it++)
+            std::cout << (*it) << " " << std::flush;
+        std::cout << std::endl;
+    }
     return ;
 }
 

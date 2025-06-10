@@ -74,7 +74,7 @@ void    Parser::parseServDirective(Server & serv_temp)
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
     }
-    else if (match("server_name"))
+    else if (match("server_name") || match("error_page"))
     {
         advanceAndCheck();
         if (_current->type != String)
@@ -83,13 +83,25 @@ void    Parser::parseServDirective(Server & serv_temp)
         {
             if (value == "server_name")
                 serv_temp.addName(_current->value);
+            else if (value == "error_page")
+                parseErrorPage(serv_temp, _current->value);
             advanceAndCheck();
         }
     }
-    advanceAndCheck();
+    if (!expect(Semicolon))
+        throw std::invalid_argument(tokenErr("expected \";\" at the end of directive", *peek(-1)));
     return ;
 }
 
+void    Parser::parseErrorPage(Server & serv_temp, std::string & page)
+{
+    if (std::find(_servError.begin(), _servError.end(), page) == _servError.end())
+        throw std::invalid_argument(tokenErr("invalid page for \"error_page\" directive", *_current));
+    long    temp;
+    temp = strtol(page.c_str(), NULL, 10);
+    serv_temp.addErrorPages(temp);
+    return ;
+}
 
 /*********Parsing Location*********/
 
@@ -155,7 +167,6 @@ void    Parser::parseLocDir(Server & serv_temp)
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
     while (_current->type != CloseBrace && _current != _tokens.end())
     {
-        std::cout << "VALUE = "<< _current->value << std::endl;
         if (_current->type == OpenBrace || _current->type == Semicolon)
             throw std::invalid_argument(tokenErr("invalid delimiter \"" + _current->value + "\"", *_current));
         else if (_current->type == String || _current->type == Block)
@@ -171,7 +182,7 @@ void    Parser::parseLocDir(Server & serv_temp)
 void    Parser::parseLocaDirective(Location & loca_temp)
 {
     std::string value = _current->value;
-    if (match("alias"))
+    if (match("alias") || match("autoindex"))
     {
         advanceAndCheck();
         if (_current->type != String)
@@ -186,11 +197,20 @@ void    Parser::parseLocaDirective(Location & loca_temp)
             loca_temp.setAlias(alias);
             loca_temp.setUrl("." + alias);
         }
+        else if (value == "autoindex")
+        {
+            if (_current->value == "on")
+                loca_temp.setAutoIndex(true);
+            else if (_current->value == "off")
+                loca_temp.setAutoIndex(false);
+            else
+                throw std::invalid_argument(tokenErr("invalid value for \"autoindex\" directive", *_current));
+        }
         advanceAndCheck();
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
     }
-    else if (match("index"))
+    else if (match("index") || match("set_method"))
     {
         advanceAndCheck();
         if (_current->type != String)
@@ -199,6 +219,13 @@ void    Parser::parseLocaDirective(Location & loca_temp)
         {
             if (value == "index")
                 loca_temp.addIndex(_current->value);
+            else if (value == "set_method")
+            {
+                if (_current->value != "GET" && _current->value != "POST" && _current->value != "DELETE")
+                    throw std::invalid_argument(tokenErr("invalid method for \"set_method\" directive", *_current));
+                else
+                    loca_temp.addMethod(_current->value);
+            }
             advanceAndCheck();
         }
    }

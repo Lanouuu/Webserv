@@ -6,8 +6,9 @@
 
 Lexer::Lexer(const std::string file) : _fileName(file)
 {
-    getServIdent();
-    getLocaIdent();
+    initServIdent();
+    initLocaIdent();
+    initErrorPages();
     loadFile(file);
     return ;
 }
@@ -42,7 +43,7 @@ std::string Lexer::tokenErr(std::string error, t_token & token)
 /*********Lexer init*********/
 
 
-void    Lexer::getServIdent(void)
+void    Lexer::initServIdent(void)
 {
     _servID.insert("server_name");
     _servID.insert("listen");
@@ -50,7 +51,7 @@ void    Lexer::getServIdent(void)
     return ;
 }
 
-void    Lexer::getLocaIdent(void)
+void    Lexer::initLocaIdent(void)
 {
     _locaID.insert("index");
     _locaID.insert("set_method");
@@ -58,7 +59,17 @@ void    Lexer::getLocaIdent(void)
     _locaID.insert("alias");
     _locaID.insert("cgi");
     _locaID.insert("autoindex");
-    _locaID.insert("index");
+    return ;
+}
+
+void    Lexer::initErrorPages(void)
+{
+    _servError.insert("200");
+    _servError.insert("201");
+    _servError.insert("204");
+    _servError.insert("400");
+    _servError.insert("404");
+    _servError.insert("500");
     return ;
 }
 
