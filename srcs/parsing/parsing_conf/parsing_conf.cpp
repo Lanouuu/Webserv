@@ -11,8 +11,15 @@ static void    printLocations(location_map locations)
             << "\t" << "Base Uri = " << (*it).second.getBaseUri()
             << std::endl
             << "\t" << "URL = " << (*it).second.getUrl()
-            << std::endl;
+            << std::endl
+            << "\t" << "Autoindex = "
+            << std::flush;
+            if ((*it).second.getAutoIndex())
+                std::cout << "[ON]" << std::endl;
+            else
+                std::cout << "[OFF]" << std::endl;
             (*it).second.printIndexes();
+            (*it).second.printMethod();
         std::cout
             << END
             << std::endl;
@@ -37,6 +44,10 @@ static void    printServers(serv_vector & servers)
             << "\t" << "Port = " << (*it).getPort()
             << std::endl
             << "\t" << "IP = " << (*it).getIP()
+            << std::endl
+            << "\t" << std::flush;
+            (*it).printErrorPage();
+            std::cout
             << END
             << std::endl
             << std::endl;

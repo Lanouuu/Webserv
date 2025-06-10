@@ -48,14 +48,16 @@ class   Lexer
         std::string             _fileName;
         
         std::set<std::string>   _servID;
+        std::set<std::string>   _servError;
         std::set<std::string>   _locaID;
 
         std::vector<t_token>    _tokens;
 
         std::string     tokenErr(std::string error, t_token & token);
 
-        void            getServIdent(void);
-        void            getLocaIdent(void);
+        void            initServIdent(void);
+        void            initLocaIdent(void);
+        void            initErrorPages(void);
 
         void            loadFile(const std::string & file);
         bool            checkEmptyLine(const std::string & line);

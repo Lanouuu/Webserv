@@ -81,6 +81,19 @@ void    Server::printServNames(void) const
     return ;
 }
 
+void    Server::printErrorPage(void) const
+{
+    if (!_serverErrorPages.empty())
+    {
+        std::cout
+            << "Error_pages = " << std::flush;
+        for (std::vector<int>::const_iterator it = _serverErrorPages.begin(); it != _serverErrorPages.end(); it++)
+            std::cout << (*it) << " " << std::flush;
+        std::cout << std::endl;
+    }
+    return ;
+}
+
 void    Server::addName(const std::string & name)
 {
     this->_serverName.push_back(name);
@@ -90,6 +103,12 @@ void    Server::addName(const std::string & name)
 void    Server::addLocation(const std::string & name, const Location & location)
 {
     this->_serverLocations.insert(std::make_pair(name, location));
+    return ;
+}
+
+void    Server::addErrorPages(const int & pages)
+{
+    _serverErrorPages.push_back(pages);
     return ;
 }
 
