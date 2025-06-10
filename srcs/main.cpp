@@ -38,8 +38,8 @@ int main(int ac, char **av, char **env)
                     fcntl(temp.getClientFd(), F_SETFL, flag);
                     // clients.insert(temp); //inserer le nouveau  client dans la map de client
                     char buf[255] = {0};
-                    size_t readed = 1;
-                    while (readed > 0)
+                    size_t readed = 255;
+                    while (readed == 255)
                     {
                         memset(&buf, 0, 255);
                         readed = recv(temp.getClientFd(), buf, 255, 0);
