@@ -11,6 +11,7 @@
 # include "Location.hpp"
 
 typedef std::map<std::string, Location> location_map;
+typedef std::map<std::string, std::vector<int> > errpage_map;
 
 class   Server
 {
@@ -34,7 +35,7 @@ class   Server
 
         void            addName(const std::string & name);
         void            addLocation(const std::string & name, const Location & location);
-        void            addErrorPages(const int & pages);
+        void            addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
 
         void            fillStruct(void);
         void            fillSocket(void);
@@ -47,7 +48,7 @@ class   Server
         std::string                 _serverRoot;
         std::string                 _serverHost;
         std::string                 _serverIndex;
-        std::vector<int>            _serverErrorPages;
+        errpage_map                 _serverErrorPages;
         std::string                 _serverIP;
         uint16_t                    _serverPort;
         location_map                _serverLocations;

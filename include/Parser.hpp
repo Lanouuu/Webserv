@@ -27,7 +27,7 @@ class   Parser : public Lexer
         void            parseLocaDirective(Location & loca_temp);
         void            parsePort(Server & serv_temp, std::string & value);
         std::string     parseIP(std::string value);
-        void            parseErrorPage(Server & serv_temp, std::string & page);
+        void            parseErrorPage(Server & serv_temp);
 
         t_token         *peek(int offset);
         bool            match(std::string key);

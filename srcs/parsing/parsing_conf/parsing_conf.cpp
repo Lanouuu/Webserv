@@ -34,6 +34,8 @@ static void    printServers(serv_vector & servers)
     for (serv_vector::iterator it = servers.begin(); it != servers.end(); it++)
     {
         std::cout 
+            << "---------------------------------------------------------"
+            << std::endl
             << GREEN << "Server [" << i << "] "
             << std::endl << std::endl
             << "\t"<< std::flush;
@@ -44,8 +46,7 @@ static void    printServers(serv_vector & servers)
             << "\t" << "Port = " << (*it).getPort()
             << std::endl
             << "\t" << "IP = " << (*it).getIP()
-            << std::endl
-            << "\t" << std::flush;
+            << std::endl;
             (*it).printErrorPage();
             std::cout
             << END

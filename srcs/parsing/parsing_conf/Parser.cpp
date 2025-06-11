@@ -82,10 +82,12 @@ void    Parser::parseServDirective(Server & serv_temp)
         while (_current->type == String)
         {
             if (value == "server_name")
+            {
                 serv_temp.addName(_current->value);
+                advanceAndCheck();
+            }
             else if (value == "error_page")
-                parseErrorPage(serv_temp, _current->value);
-            advanceAndCheck();
+                parseErrorPage(serv_temp);
         }
     }
     if (!expect(Semicolon))
@@ -93,15 +95,6 @@ void    Parser::parseServDirective(Server & serv_temp)
     return ;
 }
 
-void    Parser::parseErrorPage(Server & serv_temp, std::string & page)
-{
-    if (std::find(_servError.begin(), _servError.end(), page) == _servError.end())
-        throw std::invalid_argument(tokenErr("invalid page for \"error_page\" directive", *_current));
-    long    temp;
-    temp = strtol(page.c_str(), NULL, 10);
-    serv_temp.addErrorPages(temp);
-    return ;
-}
 
 /*********Parsing Location*********/
 
@@ -303,6 +296,42 @@ std::string Parser::parseIP(std::string value)
     }
     return (value);
 }
+
+
+/*********Parsing Error Pages*********/
+
+
+void    Parser::parseErrorPage(Server & serv_temp)
+{
+    std::pair<std::string, std::vector<int> > pair_temp;
+    std::vector<int>    error_types;
+    while (_current->type == String)
+    {
+        if (peek(1)->type == Semicolon || peek(1)->type == Identifier || peek(1)->type == Block)
+        {
+            if (_current->value[0] != '/' || _current->value[_current->value.length() - 1] == '/')
+                throw std::invalid_argument(tokenErr("expected a file for \"error_page\" directive", *_current));
+            pair_temp.first = _current->value;
+        }
+        else
+        {
+            if (std::find(_servError.begin(), _servError.end(), _current->value) == _servError.end())
+                throw std::invalid_argument(tokenErr("invalid error type for \"error_page\" directive", *_current));
+            long    err_temp;
+            err_temp = strtol(_current->value.c_str(), NULL, 10);
+            error_types.push_back(err_temp);
+        }
+        advanceAndCheck();
+    }
+    if (pair_temp.first.empty())
+        throw std::invalid_argument(tokenErr("expected a file for \"error_page\" directive", *peek(-1)));
+    if (error_types.empty())
+        throw std::invalid_argument(tokenErr("expected any error type for \"error_page\" directive", *peek(-1)));
+    pair_temp.second = error_types;
+    serv_temp.addErrorPages(pair_temp);
+    return ;
+}
+
 
 /*********Parsing utils*********/
 
