@@ -71,7 +71,12 @@ static void createSockets(socket_map & sockets, serv_vector & servers)
 {
     for (; !servers.empty();)
     {
-        
+        Server  serv_temp(servers.front());
+        if (sockets.empty())
+        {
+            Socket  socket_temp;
+            
+        }
     }
     return ;
 }
