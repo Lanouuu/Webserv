@@ -33,6 +33,8 @@ SOURCES_SERVER	=	server/launch_servers.cpp \
 						server/Location.cpp \
 
 SOURCES_CLIENT	=	client/Client.cpp \
+
+SOURCES_SOCKET	=	socket/Socket.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -46,6 +48,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CLIENT:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SOCKET:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -62,6 +65,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
 					${INC_PATH}request.hpp \
+					${INC_PATH}Socket.hpp \
 
 # **************************************************************************** #
 #                                                                              #

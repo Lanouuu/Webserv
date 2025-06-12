@@ -4,8 +4,6 @@
 # include "Lexer.hpp"
 # include "Server.hpp"
 
-typedef std::vector<Server>   serv_vector;
-
 class   Parser : public Lexer
 {
     public:
