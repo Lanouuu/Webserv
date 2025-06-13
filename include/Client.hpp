@@ -1,7 +1,7 @@
 #ifndef CLIENT_HPP
 # define CLIENT_HPP
 
-#include "request.hpp"
+#include "Request.hpp"
 
 class   Client
 {

@@ -26,7 +26,7 @@ SOURCES_MAIN	= 	main.cpp \
 SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 						parsing/parsing_conf/Lexer.cpp \
 						parsing/parsing_conf/Parser.cpp \
-						parsing/parsing_request/request.cpp \
+						parsing/parsing_request/Request.cpp \
 
 SOURCES_SERVER	=	server/Server.cpp \
 						server/Location.cpp \
@@ -65,7 +65,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Lexer.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
-					${INC_PATH}request.hpp \
+					${INC_PATH}Request.hpp \
 					${INC_PATH}Socket.hpp \
 
 # **************************************************************************** #
