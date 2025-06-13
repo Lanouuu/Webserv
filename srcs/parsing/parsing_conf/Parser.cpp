@@ -33,6 +33,8 @@ void    Parser::parseConf(serv_vector & servers)
             throw std::invalid_argument(tokenErr("expected server block", *_current));
         else if (match("server"))
             parseServer(serv_temp);
+        else
+            throw std::invalid_argument(tokenErr("expected server block or EOF", *_current));
         nb_serv++;
         _current++;
         servers.push_back(serv_temp);
@@ -42,6 +44,7 @@ void    Parser::parseConf(serv_vector & servers)
 
 void    Parser::parseServer(Server & serv_temp)
 {
+    int nb_location = 0;
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after server identifier", *peek(-1)));
@@ -52,9 +55,16 @@ void    Parser::parseServer(Server & serv_temp)
         else if (_current->type == String)
             throw std::invalid_argument(tokenErr("invalid server directive", *_current));
         else if (_current->type == Identifier)
+        {
+            if (nb_location > 0)
+            throw std::invalid_argument(tokenErr("server directive is forbidden after location block", *_current));
             parseServDirective(serv_temp);
+        }
         else if(_current->type == Block && match("location"))
+        {
             parseLocation(serv_temp);
+            nb_location++;
+        }
     }
     checkEOF();
     return ;
