@@ -34,17 +34,6 @@ Client &    Client::operator=(const Client & rhs)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
-void    Client::setFd(const int & fd)
-{
-    this->_clientFd = fd;
-    return ;
-}
-
-/****************************************************************************/
-/*                           Members Functions                              */
-/****************************************************************************/
-
-
 int  &      Client::getClientFd(void)
 {
     return _clientFd;
@@ -55,3 +44,14 @@ Request &   Client::getRequest(void)
 {
     return _request;
 }
+
+void    Client::setFd(const int & fd)
+{
+    this->_clientFd = fd;
+    return ;
+}
+
+
+/****************************************************************************/
+/*                           Members Functions                              */
+/****************************************************************************/
