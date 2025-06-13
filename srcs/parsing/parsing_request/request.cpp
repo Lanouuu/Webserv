@@ -728,11 +728,11 @@ std::string Request::create_response(int succes_code) {
     std::ostringstream response;
     std::cout << "url = " << _url << std::endl;
     if(_url == "/")
-        _url = "srcs/www/index.html";
-    else if (_url == "/srcs/www/style.css")
-        _url = "srcs/www/style.css";
+        _url = "/www/index.html";
+    else if (_url == "/www/style.css")
+        _url = "/www/style.css";
     // else if(_url == "/favicon.ico")
-    //     _url = "/srcs/images/icon/favicon.ico";
+    //     _url = "./images/icon/favicon.ico";
     std::ifstream file(_url.c_str(), std::ios::binary);
     std::cout << "File = " << _url << std::endl;
     if (!file) {
