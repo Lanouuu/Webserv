@@ -28,13 +28,14 @@ SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 						parsing/parsing_conf/Parser.cpp \
 						parsing/parsing_request/request.cpp \
 
-SOURCES_SERVER	=	server/launch_servers.cpp \
-						server/Server.cpp \
+SOURCES_SERVER	=	server/Server.cpp \
 						server/Location.cpp \
 
 SOURCES_CLIENT	=	client/Client.cpp \
 
 SOURCES_SOCKET	=	socket/Socket.cpp \
+					socket/create_sockets.cpp \
+					socket/print_sockets.cpp \
 	
 # **************************************************************************** #
 #                                                                              #

@@ -12,7 +12,6 @@
 
 typedef std::map<std::string, Location> location_map;
 typedef std::map<std::string, std::vector<int> > errpage_map;
-typedef std::vector<Server>   serv_vector;
 
 class   Server
 {
@@ -21,27 +20,23 @@ class   Server
         Server(void);
         ~Server(void);
 
-        void            setHost(const std::string & host);
-        void            setIndex(const std::string & index);
-        void            setPort(const uint16_t & port);
-        void            setIP(const std::string & ip);
+        void                        setHost(const std::string & host);
+        void                        setIndex(const std::string & index);
+        void                        setPort(const uint16_t & port);
+        void                        setIP(const std::string & ip);
 
-        std::string     getRoot(void) const;
-        uint16_t        getPort(void) const;
-        std::string     getIP(void) const;
-        location_map    getLocaMap(void) const;    
+        std::string                 getRoot(void) const;
+        uint16_t                    getPort(void) const;
+        std::string                 getIP(void) const;
+        location_map                getLocaMap(void) const;
+        std::vector<std::string>    getNames(void) const;
 
-        void            printServNames(void) const;
-        void            printErrorPage(void) const;
+        void                        printServNames(void) const;
+        void                        printErrorPage(void) const;
 
-        void            addName(const std::string & name);
-        void            addLocation(const std::string & name, const Location & location);
-        void            addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
-
-        void            fillStruct(void);
-        void            fillSocket(void);
-
-        void            launchServer(int & epoll_fd);
+        void                        addName(const std::string & name);
+        void                        addLocation(const std::string & name, const Location & location);
+        void                        addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
 
     private:
     
@@ -53,8 +48,8 @@ class   Server
         std::string                 _serverIP;
         uint16_t                    _serverPort;
         location_map                _serverLocations;
-        sockaddr_in                 _serverSa;
-        int                         _serverSocket;
 };
+
+typedef std::vector<Server>   serv_vector;
   
 #endif

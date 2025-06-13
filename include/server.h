@@ -11,7 +11,8 @@
 # include "Parser.hpp"
 # include "Socket.hpp"
 
-void    parsingConfFile(std::string file, socket_map & sockets);
-void    launchServers(serv_vector & servers, int & epoll_fd);
+void    parsingConfFile(std::string file, socket_map & sockets, int & epoll_fd);
+void    createSockets(socket_map & sockets, serv_vector & servers, int & epoll_fd);
+void    printSockets(socket_map & sockets);
 
 #endif

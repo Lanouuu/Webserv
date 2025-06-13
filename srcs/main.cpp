@@ -10,7 +10,6 @@ int main(int ac, char **av, char **env)
         if (ac < 2)
             throw std::invalid_argument( RED "Error: " END "expected \'.conf\' file");
         
-        //serv_vector servers;
         socket_map  sockets;
         client_map  clients;
         int         epoll_fd;
@@ -18,11 +17,7 @@ int main(int ac, char **av, char **env)
 
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
-        parsingConfFile(av[1], sockets);
-
-        // MODIFICATION EN COURS
-
-        launchServers(servers, epoll_fd);
+        parsingConfFile(av[1], sockets, epoll_fd);
         struct epoll_event events[MAX_EVENTS]; // tableau d'event
         while (1)
         {
