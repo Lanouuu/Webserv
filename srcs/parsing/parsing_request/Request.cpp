@@ -58,7 +58,7 @@ std::string Request::get_content_length() {
 //check si on a bien \r\n a la fin des lignes de la requete get, return error 1
 int Request::check_request_format_get(std::string const &req) {
     std::string end;
-    std::cout << "req ici = " << req << std::endl;
+    // std::cout << "req ici = " << req << std::endl;
     end = req.substr(req.find("\r\n\r\n"), 4);
     std::cout << "size - 4 = " << req.size() - 4 << std::endl;
     std::cout << "pos = "<< req.find("\r\n\r\n") << std::endl;
@@ -67,8 +67,8 @@ int Request::check_request_format_get(std::string const &req) {
         std::cout << "error size" << std::endl;
         return 1;
     }
-    for (size_t i = 0; i < end.size(); ++i)
-        std::cout << "char[" << i << "] = " << static_cast<int>(end[i]) << std::endl;
+    // for (size_t i = 0; i < end.size(); ++i)
+    //     std::cout << "char[" << i << "] = " << static_cast<int>(end[i]) << std::endl;
     if(end != "\r\n\r\n")
     {
         std::cout << "end = " << end;
@@ -581,8 +581,10 @@ int Request::parse_request(Client & client) {
         succes_code = 200;
     std::string response;
     response = create_response(succes_code);
-    std::cout << "response : " << response << std::endl;
-    send(client.getClientFd(), response.c_str(), response.length(), 0);
+    // std::cout << "response : " << response << std::endl;
+    int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
+    std::cout << "byte send = " << received << std::endl;
+    std::cout << "respose lenght = " << response.length() << std::endl;
     close(client.getClientFd());
     return 0;
 }
