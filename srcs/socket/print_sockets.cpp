@@ -47,6 +47,8 @@ static void    printServers(serv_vector servers)
             << "\t" << "IP = " << (*it).getIP()
             << std::endl;
             (*it).printErrorPage();
+            std::cout << "\t" << std::flush;
+            (*it).printIndexes();
             std::cout
             << END
             << std::endl

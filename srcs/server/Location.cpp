@@ -6,7 +6,6 @@
 
 Location::Location(void) : _locationRoot("./"), _locationAutoIndex(false), _isDirectory(false)
 {
-    this->_locationIndex.push_back("index.html");
     return ;
 }
 
@@ -33,7 +32,7 @@ Location &  Location::operator=(const Location & rhs)
         this->_locationRoot = rhs._locationRoot;
         this->_locationUrl = rhs._locationUrl;
         this->_locationAlias = rhs._locationAlias;
-        this->_locationIndex = rhs._locationIndex;
+        this->_locationIndexes = rhs._locationIndexes;
         this->_locationUpload = rhs._locationUpload;
         this->_locationMethod = rhs._locationMethod;
         this->_locationAutoIndex = rhs._locationAutoIndex;
@@ -81,6 +80,12 @@ void    Location::setIsDirectory(const bool & isdirectory)
     return ;
 }
 
+void    Location::setIndexes(const std::vector<std::string> & indexes)
+{
+    this->_locationIndexes = indexes;
+    return ;
+}
+
 std::string Location::getUrl(void) const
 {
     return (this->_locationUrl);
@@ -115,7 +120,7 @@ void    Location::printIndexes(void) const
 {
     std::cout
         << "\t" << "Indexes = " << std::flush;
-    for (std::vector<std::string>::const_iterator it = _locationIndex.begin(); it != _locationIndex.end(); it++)
+    for (std::vector<std::string>::const_iterator it = _locationIndexes.begin(); it != _locationIndexes.end(); it++)
         std::cout << (*it) << " " << std::flush;
     std::cout << std::endl;
     return ;
@@ -140,20 +145,24 @@ void    Location::addMethod(const std::string & method)
     return ;
 }
 
-void    Location::addIndex(const std::string & index, long flag_index)
+void    Location::addIndex(const std::string & index)
 {
-    if (flag_index == 0)
-        this->_locationIndex.clear();
-    this->_locationIndex.push_back(index);
+    this->_locationIndexes.push_back(index);
     return ;
 }
 
 void    Location::uploadIndex(const std::string & url)
 {
-    for (std::vector<std::string>::iterator it = _locationIndex.begin(); it != _locationIndex.end(); it++)
+    for (std::vector<std::string>::iterator it = _locationIndexes.begin(); it != _locationIndexes.end(); it++)
     {
         std::string buf = url + (*it);
         (*it) = buf;
     }
+    return ;
+}
+
+void    Location::clearIndex(void)
+{
+    _locationIndexes.clear();
     return ;
 }

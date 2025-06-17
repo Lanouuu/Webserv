@@ -48,6 +48,8 @@ void    Lexer::initServIdent(void)
     _servID.insert("server_name");
     _servID.insert("listen");
     _servID.insert("error_page");
+    _servID.insert("index");
+    _servID.insert("max_body_size");
     return ;
 }
 
@@ -59,6 +61,7 @@ void    Lexer::initLocaIdent(void)
     _locaID.insert("alias");
     _locaID.insert("cgi");
     _locaID.insert("autoindex");
+    _locaID.insert("max_body_size");
     return ;
 }
 
