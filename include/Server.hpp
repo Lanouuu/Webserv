@@ -21,30 +21,32 @@ class   Server
         ~Server(void);
 
         void                        setHost(const std::string & host);
-        void                        setIndex(const std::string & index);
         void                        setPort(const uint16_t & port);
         void                        setIP(const std::string & ip);
 
-        std::string                         getRoot(void) const;
-        uint16_t                            getPort(void) const;
-        std::string                         getIP(void) const;
-        location_map                        getLocaMap(void) const;
-        std::vector<std::string> const &    getNames(void) const;
-        std::string const &                 getIndex(void) const;
+        std::string                 getRoot(void) const;
+        uint16_t                    getPort(void) const;
+        std::string                 getIP(void) const;
+        location_map                getLocaMap(void) const;
+        std::vector<std::string>    getNames(void) const;
+        std::vector<std::string>    getIndexes(void) const;
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;
+        void                        printIndexes(void) const;
 
         void                        addName(const std::string & name);
         void                        addLocation(const std::string & name, const Location & location);
         void                        addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
+        void                        addIndex(const std::string & index);
+        void                        clearIndex(void);
 
     private:
     
         std::vector<std::string>    _serverName;
         std::string                 _serverRoot;
         std::string                 _serverHost;
-        std::string                 _serverIndex;
+        std::vector<std::string>    _serverIndexes;
         errpage_map                 _serverErrorPages;
         std::string                 _serverIP;
         uint16_t                    _serverPort;

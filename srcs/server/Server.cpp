@@ -6,6 +6,7 @@
 
 Server::Server(void) : _serverRoot("./")
 {
+    _serverIndexes.push_back("index.html");
     return ;
 }
 
@@ -26,12 +27,6 @@ Server::~Server(void)
 void    Server::setHost(const std::string & host)
 {
     this->_serverHost = host;
-    return ;
-}
-
-void    Server::setIndex(const std::string & index)
-{
-    this->_serverIndex = index;
     return ;
 }
 
@@ -67,14 +62,14 @@ location_map    Server::getLocaMap(void) const
     return (this->_serverLocations);
 }
 
-std::vector<std::string> const & Server::getNames(void) const
+std::vector<std::string> Server::getNames(void) const
 {
     return (this->_serverName);
 }
 
-std::string const &         Server::getIndex(void) const
+std::vector<std::string>    Server::getIndexes(void) const
 {
-    return (this->_serverIndex);
+    return (this->_serverIndexes);
 }
 
 /****************************************************************************/
@@ -104,8 +99,17 @@ void    Server::printErrorPage(void) const
                 std::cout << "\t" << (*vit) << std::endl; 
             i++;
         }
-        std::cout << std::endl;
     }
+    return ;
+}
+
+void    Server::printIndexes(void) const
+{
+    std::cout
+        << "Indexes = " << std::flush;
+    for (std::vector<std::string>::const_iterator it = _serverIndexes.begin(); it != _serverIndexes.end(); it++)
+        std::cout << (*it) << " " << std::flush;
+    std::cout << std::endl;
     return ;
 }
 
@@ -124,5 +128,17 @@ void    Server::addLocation(const std::string & name, const Location & location)
 void    Server::addErrorPages(const std::pair<std::string, std::vector<int> > & pages)
 {
     _serverErrorPages.insert(pages);
+    return ;
+}
+
+void    Server::addIndex(const std::string & index)
+{
+    _serverIndexes.push_back(index);
+    return ;
+}
+
+void    Server::clearIndex(void)
+{
+    _serverIndexes.clear();
     return ;
 }

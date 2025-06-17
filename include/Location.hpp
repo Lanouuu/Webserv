@@ -30,6 +30,7 @@ class   Location
         void        setUpload(const std::string & path);
         void        setAutoIndex(const bool & autoindex);
         void        setIsDirectory(const bool & isdirectory);
+        void        setIndexes(const std::vector<std::string> & indexes);
 
         std::string getBaseUri(void) const;
         std::string getUrl(void) const;
@@ -38,9 +39,10 @@ class   Location
         bool        getIsDirectory(void) const;
 
         void        addMethod(const std::string & method);
-        void        addIndex(const std::string & index, long flag_index);
+        void        addIndex(const std::string & index);
 
         void        uploadIndex(const std::string & uri);
+        void        clearIndex(void);
 
         void        printIndexes(void) const;
         void        printMethod(void) const;
@@ -51,7 +53,7 @@ class   Location
         std::string                 _locationRoot;
         std::string                 _locationAlias;
         std::string                 _locationUrl;
-        std::vector<std::string>    _locationIndex;
+        std::vector<std::string>    _locationIndexes;
         std::string                 _locationUpload;
         std::vector<std::string>    _locationMethod;
         bool                        _locationAutoIndex;
