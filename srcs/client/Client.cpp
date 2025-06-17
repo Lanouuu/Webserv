@@ -45,12 +45,22 @@ Request &   Client::getRequest(void)
     return _request;
 }
 
+std::string const & Client::getUid(void)
+{
+    return _uid;
+}
+
 void    Client::setFd(const int & fd)
 {
     this->_clientFd = fd;
     return ;
 }
 
+void        Client::setUid(std::string const & uid)
+{
+    this->_uid = uid;
+    return ;
+}
 
 /****************************************************************************/
 /*                           Members Functions                              */

@@ -25,11 +25,12 @@ class   Server
         void                        setPort(const uint16_t & port);
         void                        setIP(const std::string & ip);
 
-        std::string                 getRoot(void) const;
-        uint16_t                    getPort(void) const;
-        std::string                 getIP(void) const;
-        location_map                getLocaMap(void) const;
-        std::vector<std::string>    getNames(void) const;
+        std::string                         getRoot(void) const;
+        uint16_t                            getPort(void) const;
+        std::string                         getIP(void) const;
+        location_map                        getLocaMap(void) const;
+        std::vector<std::string> const &    getNames(void) const;
+        std::string const &                 getIndex(void) const;
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;

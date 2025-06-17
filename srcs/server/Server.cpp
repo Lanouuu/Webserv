@@ -67,9 +67,14 @@ location_map    Server::getLocaMap(void) const
     return (this->_serverLocations);
 }
 
-std::vector<std::string> Server::getNames(void) const
+std::vector<std::string> const & Server::getNames(void) const
 {
     return (this->_serverName);
+}
+
+std::string const &         Server::getIndex(void) const
+{
+    return (this->_serverIndex);
 }
 
 /****************************************************************************/

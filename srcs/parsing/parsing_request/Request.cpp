@@ -264,7 +264,7 @@ std::string Request::convert_to_string() {
     return res;
 }
 
-int Request::parse_request(Client & client) {
+int Request::parse_request(Client & client, socket_map & sockets, int & socket_fd) {
     std::string line;
     std::string word;
     int succes_code = 0;
@@ -580,7 +580,7 @@ int Request::parse_request(Client & client) {
     if (_methode == "GET")
         succes_code = 200;
     std::string response;
-    response = create_response(succes_code);
+    response = create_response(succes_code, sockets, socket_fd);
     // std::cout << "response : " << response << std::endl;
     int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
     std::cout << "byte send = " << received << std::endl;
@@ -725,12 +725,30 @@ std::string get_file_type(const std::string& path) {
     return "application/octet-stream";
 }
 
-std::string Request::create_response(int succes_code) {
+std::string Request::create_response(int succes_code, socket_map & sockets, int  & socket_fd) {
     std::string root_path = "./";
     std::ostringstream response;
+    serv_vector servers = sockets[socket_fd].getServers();
+    serv_vector::const_iterator it = servers.begin();
+    location_map location = it->getLocaMap();
+    for (; it != servers.end(); it++)
+    {
+        for (std::vector<std::string>::const_iterator name = it->getNames().begin(); name != it->getNames().end(); name++)
+        {
+            if (_host == *name)
+            break ;
+        }
+    }
+    if (it == servers.end())
+        it = servers.begin();
     std::cout << "url = " << _url << std::endl;
+    std::cout << "it->index = " << it->getIndex() << std::endl;
     if(_url == "/")
-        _url = "www/index.html";
+    {
+        // location temp = location.find(_url);
+        if (location.find(_url) != location.end())
+            _url = it->getIndex();
+    }
     else if (_url == "/www/style.css")
         _url = "www/style.css";
     // else if(_url == "/favicon.ico")

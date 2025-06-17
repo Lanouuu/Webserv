@@ -28,15 +28,28 @@ int main(int ac, char **av, char **env)
             {
                 int socket_fd = events[i].data.fd; // -> correspond a la socket du server;
                 if (events[i].events & EPOLLIN) {
-                    std::cout << "EPOLLIN" << std::endl;
                     Client temp;
                     struct sockaddr_in clientInfo;
                     socklen_t size = sizeof(clientInfo);
                     temp.setFd(accept(socket_fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
-                    // int flag = fcntl(temp.getClientFd(), F_SETFL, 0);
-                    // flag |= O_NONBLOCK;
-                    // fcntl(temp.getClientFd(), F_SETFL, O_NONBLOCK);
-                    // clients.insert(temp); //inserer le nouveau  client dans la map de client
+                    for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                    {
+                        std::stringstream ss;
+                        std::string key;
+                        ss << i;
+                        ss >> key;
+                        client_map::const_iterator it = clients.find(key);
+                        if (it != clients.end())
+                            continue;
+                        clients.insert(std::pair<std::string, Client>(key, temp));
+                        clients[key].setUid(key);
+                        break ;
+                    }
+                    if (!clients.empty())
+                    {
+                        for(client_map::iterator it = clients.begin(); it != clients.end(); it++)
+                            std::cout << "client uid = " << it->second.getUid() << std::endl;
+                    }
                     char buf[255] = {0};
                     int readed = 255;
                     while (readed == 255)
@@ -47,10 +60,7 @@ int main(int ac, char **av, char **env)
                         temp.getRequest().add_request(buf, sizeof(buf));
                         std::cout << buf << std::endl;
                     }
-                    // std::cout << "HERE" << std::endl;
-                    // Parsing requete
-                    temp.getRequest().parse_request(temp);
-                    // if (temp.getRequest().parse_request(temp.getRequest().getRequest()) != 0)
+                    temp.getRequest().parse_request(temp, sockets, socket_fd);
                 }
             }
         }
