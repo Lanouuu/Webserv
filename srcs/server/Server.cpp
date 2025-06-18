@@ -135,8 +135,7 @@ void    Server::fillStruct(void)
 {
     _serverSa.sin_family = AF_INET;
     _serverSa.sin_port = htons(_serverPort);
-    if (inet_pton(AF_INET, _serverIP.c_str(), &_serverSa.sin_addr) != 1)
-        throw std::runtime_error(RED "Error: inet_pton: " END + std::string(strerror(errno)));
+    _serverSa.sin_addr.s_addr = INADDR_ANY;
     return ;
 }
 

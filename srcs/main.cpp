@@ -17,10 +17,7 @@ int main(int ac, char **av, char **env)
 
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
-        parsingConfFile(av[1], sockets);
-
-        // MODIFICATION EN COURS
-
+        parsingConfFile(av[1], servers);
         launchServers(servers, epoll_fd);
         struct epoll_event events[MAX_EVENTS]; // tableau d'event
         while (1)

@@ -8,10 +8,10 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include "Client.hpp"
+# include "Server.hpp"
 # include "Parser.hpp"
-# include "Socket.hpp"
 
-void    parsingConfFile(std::string file, socket_map & sockets);
+void    parsingConfFile(std::string file, serv_vector & servers);
 void    launchServers(serv_vector & servers, int & epoll_fd);
 
 #endif

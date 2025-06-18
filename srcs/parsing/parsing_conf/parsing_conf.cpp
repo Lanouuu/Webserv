@@ -57,39 +57,23 @@ static void    printServers(serv_vector & servers)
     }
 }
 
-// static void fillServer(serv_vector & servers)
-// {
-//     for (serv_vector::iterator it = servers.begin(); it != servers.end(); it++)
-//     {
-//         (*it).fillStruct();
-//         (*it).fillSocket();
-//     }
-//     return ;
-// }
-
-static void createSockets(socket_map & sockets, serv_vector & servers)
+static void fillServer(serv_vector & servers)
 {
-    for (; !servers.empty();)
+    for (serv_vector::iterator it = servers.begin(); it != servers.end(); it++)
     {
-        Server  serv_temp(servers.front());
-        if (sockets.empty())
-        {
-            Socket  socket_temp;
-            
-        }
+        (*it).fillStruct();
+        (*it).fillSocket();
     }
     return ;
 }
 
-void    parsingConfFile(std::string file, socket_map & sockets)
+void    parsingConfFile(std::string file, serv_vector & servers)
 {
-    Parser      parser(file);
-    serv_vector servers;
+    Parser   parser(file);
 
   //  parser.printTokens();
     parser.parseConf(servers);
-    createSockets(sockets, servers);
-    //fillServer(servers);
+    fillServer(servers);
     printServers(servers);
     return ;
 }

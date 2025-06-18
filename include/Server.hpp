@@ -12,7 +12,6 @@
 
 typedef std::map<std::string, Location> location_map;
 typedef std::map<std::string, std::vector<int> > errpage_map;
-typedef std::vector<Server>   serv_vector;
 
 class   Server
 {
