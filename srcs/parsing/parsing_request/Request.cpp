@@ -728,7 +728,9 @@ std::string get_file_type(const std::string& path) {
 std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     std::cout << "url = " << _url << std::endl;
-    if (_url == "/www/style.css")
+    if (_url == "/")
+        _url = "www/index.html";
+    else if (_url == "/www/style.css")
         _url = "www/style.css";
     else if(_url == "/favicon.ico")
         _url = "images/icon/favicon.ico";
