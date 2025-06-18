@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Server::Server(void) : _serverRoot("./")
+Server::Server(void) : _serverRoot("./"), _serverSocket(-1)
 {
     _serverIndexes.push_back("index.html");
     return ;
@@ -128,6 +128,37 @@ void    Server::addLocation(const std::string & name, const Location & location)
 void    Server::addErrorPages(const std::pair<std::string, std::vector<int> > & pages)
 {
     _serverErrorPages.insert(pages);
+    return ;
+}
+
+void    Server::fillStruct(void)
+{
+    _serverSa.sin_family = AF_INET;
+    _serverSa.sin_port = htons(_serverPort);
+    if (inet_pton(AF_INET, _serverIP.c_str(), &_serverSa.sin_addr) != 1)
+        throw std::runtime_error(RED "Error: inet_pton: " END + std::string(strerror(errno)));
+    return ;
+}
+
+void    Server::fillSocket(void)
+{
+    _serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (_serverSocket == -1)
+        throw std::runtime_error(RED "Error: socket: " END + std::string(strerror(errno)));
+    return ;
+}
+
+void    Server::launchServer(int & epoll_fd)
+{
+    if (bind(_serverSocket, (struct sockaddr *)&_serverSa, sizeof(_serverSa)) == -1)
+        throw std::runtime_error(RED "Error: bind: " END + std::string(strerror(errno)));
+    if (listen(_serverSocket, 4096) == -1)
+        throw std::runtime_error(RED "Error: listen: " END + std::string(strerror(errno)));
+    struct epoll_event  event;
+    event.events = EPOLLIN;
+    event.data.fd = _serverSocket;
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, _serverSocket, &event) == -1)
+        throw std::runtime_error("Error: epoll_ctl: " + std::string(strerror(errno)));
     return ;
 }
 

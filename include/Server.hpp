@@ -12,6 +12,7 @@
 
 typedef std::map<std::string, Location> location_map;
 typedef std::map<std::string, std::vector<int> > errpage_map;
+typedef std::vector<Server>   serv_vector;
 
 class   Server
 {
@@ -41,6 +42,11 @@ class   Server
         void                        addIndex(const std::string & index);
         void                        clearIndex(void);
 
+        void                        fillStruct(void);
+        void                        fillSocket(void);
+
+        void                        launchServer(int & epoll_fd);
+
     private:
     
         std::vector<std::string>    _serverName;
@@ -51,8 +57,8 @@ class   Server
         std::string                 _serverIP;
         uint16_t                    _serverPort;
         location_map                _serverLocations;
+        sockaddr_in                 _serverSa;
+        int                         _serverSocket;
 };
-
-typedef std::vector<Server>   serv_vector;
   
 #endif
