@@ -62,7 +62,6 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
 					${INC_PATH}Request.hpp \
-					${INC_PATH}Socket.hpp \
 
 # **************************************************************************** #
 #                                                                              #

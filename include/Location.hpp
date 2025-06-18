@@ -32,9 +32,10 @@ class   Location
         void        setIsDirectory(const bool & isdirectory);
         void        setIndexes(const std::vector<std::string> & indexes);
 
-        std::string getBaseUri(void) const;
-        std::string getUrl(void) const;
-        std::string getAlias(void) const;
+        std::string                         getBaseUri(void) const;
+        std::string                         getUrl(void) const;
+        std::string                         getAlias(void) const;
+        std::vector<std::string> const &    getIndexes(void) const;
         bool        getAutoIndex(void) const;
         bool        getIsDirectory(void) const;
 

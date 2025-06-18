@@ -72,6 +72,11 @@ std::vector<std::string>    Server::getIndexes(void) const
     return (this->_serverIndexes);
 }
 
+int const &                 Server::getSocket(void) const
+{
+    return (this->_serverSocket);
+}   
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/

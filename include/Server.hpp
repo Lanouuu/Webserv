@@ -30,6 +30,7 @@ class   Server
         location_map                getLocaMap(void) const;
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
+        int const &                 getSocket(void) const;               
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;

@@ -111,6 +111,10 @@ bool    Location::getIsDirectory(void) const
     return (this->_isDirectory);
 }
 
+std::vector<std::string> const &    Location::getIndexes(void) const
+{
+    return (this->_locationIndexes);
+}
 
 /****************************************************************************/
 /*                           Members Functions                              */

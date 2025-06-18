@@ -14,7 +14,7 @@ int main(int ac, char **av, char **env)
         client_map  clients;
         int         epoll_fd;
         int         n_event;
-
+        size_t      index = 0;
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
         parsingConfFile(av[1], servers);
@@ -61,7 +61,12 @@ int main(int ac, char **av, char **env)
                         temp.getRequest().add_request(buf, sizeof(buf));
                         std::cout << buf << std::endl;
                     }
-                    temp.getRequest().parse_request(temp, sockets, socket_fd);
+                    for(;index < servers.size(); index++)
+                    {
+                        if (servers[index].getSocket() == socket_fd)
+                            break ;
+                    }
+                    temp.getRequest().parse_request(temp, servers[index]);
                 }
             }
         }
