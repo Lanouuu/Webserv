@@ -734,6 +734,8 @@ std::string Request::create_response(int succes_code, Server const & server) {
         _url = "www/style.css";
     else if(_url == "/favicon.ico")
         _url = "images/icon/favicon.ico";
+    else if(_url == "/images/icon/favicon.ico")
+        _url = "images/icon/favicon.ico";
     else
     {
         std::string root_path = "./";

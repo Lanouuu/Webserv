@@ -150,6 +150,8 @@ void    Server::fillSocket(void)
     _serverSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (_serverSocket == -1)
         throw std::runtime_error(RED "Error: socket: " END + std::string(strerror(errno)));
+    int opt = 1;
+    setsockopt(_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
     return ;
 }
 
