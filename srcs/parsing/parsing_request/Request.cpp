@@ -720,6 +720,7 @@ std::string get_file_type(const std::string& path) {
     if (ext == "png") return "image/png";
     if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
     if (ext == "ico") return "image/x-icon";
+    if (ext == "sh") return "script";
     return "application/octet-stream";
 }
 
@@ -775,6 +776,61 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << "\r\n";
         response << body;
         return response.str();
+    }
+    else if(get_file_type(_url) == "script")
+    {
+        int pipefd[2];
+        if (pipe(pipefd) == -1)
+        {
+            response << "error";
+            return response.str();
+        }
+
+        pid_t pid;
+        pid = fork();
+        if(pid < 0)
+        {
+            response << "error";
+            return response.str();  
+        }
+        if(pid == 0)
+        {
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[0]);
+            close(pipefd[1]);
+            std::string file_name;
+            std::string::size_type pos = _url.find_last_of('/');
+            if(pos == std::string::npos)    
+                file_name = _url.substr(pos + 1);
+            else
+                file_name = _url;
+            char *argv[] = {
+                (char *)file_name.c_str(),
+                NULL
+            };
+
+            // ===> Variables d'environnement CGI
+            char *envp[] = {
+                (char *)"REQUEST_METHOD=GET",
+                (char *)"GATEWAY_INTERFACE=CGI/1.1",
+                (char *)"SERVER_PROTOCOL=HTTP/1.1",
+                // (char *)"CONTENT_LENGTH=0",
+                // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
+                NULL
+            };
+            execve(_url.c_str(), argv, envp);
+            perror("execve");
+            exit(1);
+        }
+        else
+        {
+            close(pipefd[1]);
+            char buffer[4096];
+            size_t count;
+            while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
+                write(server.getSocket(), buffer, count);
+            close(pipefd[0]);
+        }
     }
     else
     {
