@@ -464,8 +464,6 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::cout << "Pas ok 0" << std::endl;
                 return 400;
             }
-
-
             begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             // std::cout << "boudary = " << boundary << std::endl;
             // std::cout << "begin = " << begin - _body.begin() << std::endl;
@@ -738,23 +736,51 @@ std::string Request::create_response(int succes_code, Server const & server) {
         _url = "images/icon/favicon.ico";
     else
     {
-        std::string root_path = "./";
         location_map locations = server.getLocaMap();
-        Location location = locations.find(_url)->second;
-        _url = location.getUrl() + location.getIndexes().front();
-        
+        location_map::iterator it = locations.find(_url);
+        if (it != locations.end())
+        {
+            struct stat s;
+            if(stat(_url.c_str(), &s) == 0)
+            {
+                if( s.st_mode & S_IFDIR )
+                {
+                    // it's a directory
+                    _url = it->second.getUrl() + it->second.getIndexes().front();
+                }
+                else if( s.st_mode & S_IFREG )
+                {
+                    // it's a file
+                    _url = it->second.getUrl();
+                }
+            }
+        }
     }
+    if (_url[0] == '/')
+        _url.erase(0, 1);
     std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
     std::cout << "File = " << _url << std::endl;
+    std::ostringstream ss;
+    std::string body;
     if (!file) {
-        return "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n\r\n";
+        std::cout << "Could not find " << _url << std::endl;
+        std::ifstream error_file("www/codes_pages/404.html", std::ios::binary);
+        ss << error_file.rdbuf();
+        body = ss.str();
+        response << "HTTP/1.1 404 Not Found\r\n";
+        response << "Content-Type: " << "text/html" << "\r\n";
+        response << "Content-Length: " << body.size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << body;
+        return response.str();
     }
     else
     {
-        std::ostringstream ss;
+        std::cout << "File found " << _url << std::endl;
         ss << file.rdbuf();
-        std::string body = ss.str();
+        body = ss.str();
         if (succes_code == 200)
         {     
             response << "HTTP/1.1 200 OK\r\n";
