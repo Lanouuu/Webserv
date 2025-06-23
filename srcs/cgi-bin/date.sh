@@ -1,21 +1,24 @@
 #!/bin/sh
+echo "HTTP/1.1 200 OK"
+echo "Content-Type: text/html";
+echo "";
 
 tmp=`/bin/date`
 
-cat << EndFile
-Content-type: text/html
+cat << EOF
 
-<HTML><HEAD><TITLE>Script Cgi</TITLE></HEAD>
-<BODY>
+<!DOCTYPE html>
+<head><title>Script Cgi</title></head>
+<body>
 
-<CENTER>
+<center>
 
-<H1>La date courante sur le serveur est</H1>
-$tmp
+<h1>La date courante sur le serveur est</h1>
+<p>$tmp</p>
 
-</CENTER>
+</center>
 
-</BODY>
-</HTML>
+</body>
+</html>
 
-EndFile
+EOF

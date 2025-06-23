@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <sys/wait.h>
 
 Request::Request() {
 
@@ -579,7 +580,7 @@ int Request::parse_request(Client & client, Server const & server) {
         succes_code = 200;
     std::string response;
     response = create_response(succes_code, server);
-    // std::cout << "response : " << response << std::endl;
+    std::cout << "response : " << response.c_str() << std::endl;
     int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
     std::cout << "byte send = " << received << std::endl;
     std::cout << "respose lenght = " << response.length() << std::endl;
@@ -818,18 +819,26 @@ std::string Request::create_response(int succes_code, Server const & server) {
                 // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
                 NULL
             };
+            // std::cout << "url avant exec : " << _url.c_str() << std::endl;
             execve(_url.c_str(), argv, envp);
             perror("execve");
             exit(1);
         }
         else
         {
+            std::cout << "in parent" << std::endl;
             close(pipefd[1]);
             char buffer[4096];
-            size_t count;
+            ssize_t count;
+            wait(NULL);
             while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
-                write(server.getSocket(), buffer, count);
+            {
+                // write(client_fd, buffer, count);
+                response << buffer;
+                // std::cout << "response in sh : " << response.str() << std::endl;
+            }    
             close(pipefd[0]);
+            return response.str();
         }
     }
     else
