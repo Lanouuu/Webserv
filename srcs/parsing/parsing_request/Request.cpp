@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include <sys/wait.h>
+#include <dirent.h>
 
 Request::Request() {
 
@@ -721,12 +722,15 @@ std::string get_file_type(const std::string& path) {
     if (ext == "png") return "image/png";
     if (ext == "jpg" || ext == "jpeg") return "image/jpeg";
     if (ext == "ico") return "image/x-icon";
+    if (ext == "txt") return "text/plain";
     if (ext == "sh") return "script";
     return "application/octet-stream";
 }
 
 std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
+    struct stat s;
+    std::string temp;
     std::cout << "url = " << _url << std::endl;
     if (_url == "/")
         _url = "www/index.html";
@@ -742,7 +746,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
         location_map::iterator it = locations.find(_url);
         if (it != locations.end())
         {
-            struct stat s;
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -757,16 +760,36 @@ std::string Request::create_response(int succes_code, Server const & server) {
                 }
             }
         }
+        else
+        {
+            if (_url[0] == '/')
+                _url.erase(0, 1);
+            if(stat(_url.c_str(), &s) == 0)
+            {
+                if( s.st_mode & S_IFDIR )
+                {
+                    // it's a directory
+                    if (_url[_url.size() - 1] != '/')
+                        _url += '/';
+                    temp = _url;
+                    _url = server.getRoot() + temp + server.getIndexes().front();
+                }
+                else if( s.st_mode & S_IFREG )
+                {
+                    // it's a file
+                    temp = _url;
+                    _url = server.getRoot() + temp;
+                }
+            }
+        }
     }
     if (_url[0] == '/')
         _url.erase(0, 1);
-    std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
-    std::cout << "File = " << _url << std::endl;
     std::ostringstream ss;
     std::string body;
-    if (!file) {
-        std::cout << "Could not find " << _url << std::endl;
+    std::stringstream html;
+    if (!file &&  s.st_mode & S_IFREG) {
         std::ifstream error_file("www/codes_pages/404.html", std::ios::binary);
         ss << error_file.rdbuf();
         body = ss.str();
@@ -777,6 +800,37 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << "\r\n";
         response << body;
         return response.str();
+    }
+    else if (!file &&  s.st_mode & S_IFDIR)
+    {
+        _url = temp;
+        if (_url[0] == '/')
+            _url.erase(0, 1);
+        DIR *dir = opendir(_url.c_str());
+        struct dirent *openDir = NULL;
+        struct stat currentDir;
+        html << "<html><body><h1>Index of " << _url << "</h1><ul>";
+        while ((openDir = readdir(dir)) != NULL)
+        {
+            std::string file(openDir->d_name);
+            if (openDir->d_name[0] == '.')
+                continue;
+            stat((_url + file).c_str(), &currentDir);
+            if(currentDir.st_mode & S_IFDIR )
+            {
+                // it's a directory
+                file += '/';
+            }
+            html << "<li><a href='" << file  << "'>" << file << "</a></li>";
+            
+        }
+        html << "</ul></body></html>";
+        response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/html" << "\r\n";
+        response << "Content-Length: " << html.str().size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << html.str();
     }
     else if(get_file_type(_url) == "script")
     {
@@ -848,12 +902,24 @@ std::string Request::create_response(int succes_code, Server const & server) {
         body = ss.str();
         if (succes_code == 200)
         {     
-            response << "HTTP/1.1 200 OK\r\n";
-            response << "Content-Type: " << get_file_type(_url) << "\r\n";
-            response << "Content-Length: " << body.size() << "\r\n";
-            response << "Connection: keep-alive\r\n";
-            response << "\r\n";
-            response << body;
+            if (!file &&  s.st_mode & S_IFDIR)
+            {
+                response << "HTTP/1.1 200 OK\r\n";
+                response << "Content-Type: text/html" << "\r\n";
+                response << "Content-Length: " << body.size() << "\r\n";
+                response << "Connection: keep-alive\r\n";
+                response << "\r\n";
+                response << html.str();
+            }
+            else
+            {
+                response << "HTTP/1.1 200 OK\r\n";
+                response << "Content-Type: " << get_file_type(_url) << "\r\n";
+                response << "Content-Length: " << body.size() << "\r\n";
+                response << "Connection: keep-alive\r\n";
+                response << "\r\n";
+                response << body;
+            }
         }
         else if (succes_code == 201)
         {           
