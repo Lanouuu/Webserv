@@ -4,7 +4,7 @@
 /*                      Constructors / Destructors                          */
 /****************************************************************************/
 
-Server::Server(void) : _serverRoot("./"), _serverSocket(-1)
+Server::Server(void) : _serverRoot("./"), _serverSocket(-1), _serverBodySize(1048576)
 {
     _serverIndexes.push_back("index.html");
     return ;
@@ -42,6 +42,12 @@ void    Server::setIP(const std::string & ip)
     return ;
 }
 
+void    Server::setBodySize(const size_t & size)
+{
+    this->_serverBodySize = size;
+    return ;
+}
+
 std::string Server::getRoot(void) const
 {
     return (this->_serverRoot);
@@ -72,10 +78,15 @@ std::vector<std::string>    Server::getIndexes(void) const
     return (this->_serverIndexes);
 }
 
-int const &                 Server::getSocket(void) const
+int & Server::getSocket(void)
 {
     return (this->_serverSocket);
-}   
+}  
+
+size_t &    Server::getBodySize(void)
+{
+    return (this->_serverBodySize);
+}
 
 /****************************************************************************/
 /*                           Members Functions                              */
