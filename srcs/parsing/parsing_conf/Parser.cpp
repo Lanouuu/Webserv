@@ -357,7 +357,7 @@ void    Parser::parseErrorPage(Server & serv_temp)
 
 size_t    Parser::parseBodySize(std::string & str_size)
 {
-    size_t num = 0;
+    size_t  result = 0;
 
     if (str_size.find_first_not_of("0123456789KkMmGg") != std::string::npos)
         throw std::invalid_argument(tokenErr("invalid value for \"max_body_size\" directive", *_current));
@@ -376,15 +376,28 @@ size_t    Parser::parseBodySize(std::string & str_size)
         }
     }
     if (suffix.empty())
-        num = strtol(str_size.c_str(), NULL, 10);
+        result = strtol(str_size.c_str(), NULL, 10);
     else
     {
+        size_t base = 0;
+        size_t multiplier = 1;
         std::string str_num = str_size.substr(0, str_size.size() - 1);
-        num = strtol(str_num.c_str(), NULL, 10);
-        if (num > MAX_BODY_SIZE || errno == ERANGE)
-            throw std::invalid_argument(tokenErr("max body size too large", *_current));
+        base = strtol(str_num.c_str(), NULL, 10);
+        if (base > MAX_BODY_SIZE || errno == ERANGE)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+        if (suffix == "K" || suffix == "k")
+            multiplier = 1024;
+        else if (suffix == "M" || suffix == "m")
+            multiplier = 1024 * 1024;
+        else if (suffix == "G" || suffix == "g")
+            multiplier = 1024 * 1024 * 1024;
+        if (base > MAX_BODY_SIZE / multiplier)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+        result = base * multiplier;
     }
-    return (num);
+    if (result > MAX_BODY_SIZE)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+    return (result);
 }
 
 

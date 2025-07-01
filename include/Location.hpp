@@ -39,6 +39,7 @@ class   Location
         std::vector<std::string> const &    getIndexes(void) const;
         bool                                getAutoIndex(void) const;
         bool                                getIsDirectory(void) const;
+        size_t                              getBodySize(void) const;
 
         void                                addMethod(const std::string & method);
         void                                addIndex(const std::string & index);

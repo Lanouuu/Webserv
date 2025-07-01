@@ -31,6 +31,7 @@ SOURCES_PARSING	=	parsing/parsing_conf/parsing_conf.cpp \
 SOURCES_SERVER	=	server/launch_servers.cpp \
 						server/Server.cpp \
 						server/Location.cpp \
+						server/print_servers.cpp \
 
 SOURCES_CLIENT	=	client/Client.cpp \
 	
