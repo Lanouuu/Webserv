@@ -73,13 +73,15 @@ void    Parser::parseServer(Server & serv_temp)
 void    Parser::parseServDirective(Server & serv_temp)
 {
     std::string value = _current->value;
-    if (match("listen"))
+    if (match("listen") || match("max_body_size"))
     {
         advanceAndCheck();
         if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         if (value == "listen")
             parsePort(serv_temp, _current->value);
+        else if (value == "max_body_size")
+            serv_temp.setBodySize(parseBodySize(_current->value));
         advanceAndCheck();
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
@@ -144,6 +146,7 @@ void    Parser::parseLocFile(Server & serv_temp)
     loca_temp.setBaseUri(_current->value);
     loca_temp.setUrl("." + _current->value);
     loca_temp.setIndexes(serv_temp.getIndexes());
+    loca_temp.setBodySize(serv_temp.getBodySize());
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -170,6 +173,7 @@ void    Parser::parseLocDir(Server & serv_temp)
     loca_temp.setUrl("." + _current->value);
     loca_temp.setIsDirectory(true);
     loca_temp.setIndexes(serv_temp.getIndexes());
+    loca_temp.setBodySize(serv_temp.getBodySize());
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -189,7 +193,7 @@ void    Parser::parseLocDir(Server & serv_temp)
 void    Parser::parseLocaDirective(Location & loca_temp)
 {
     std::string value = _current->value;
-    if (match("alias") || match("autoindex"))
+    if (match("alias") || match("autoindex") || match("max_body_size"))
     {
         advanceAndCheck();
         if (_current->type != String)
@@ -216,6 +220,8 @@ void    Parser::parseLocaDirective(Location & loca_temp)
             else
                 throw std::invalid_argument(tokenErr("invalid value for \"autoindex\" directive", *_current));
         }
+        else if (value == "max_body_size")
+            loca_temp.setBodySize(parseBodySize(_current->value));
         advanceAndCheck();
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
@@ -295,7 +301,8 @@ std::string Parser::parseIP(std::string value)
     int     i = 0;
     std::string buf;
     std::string temp = value;
-    while (i < 4) {
+    while (i < 4) 
+    {
         pos = temp.find('.');
         buf = temp.substr(0, pos);
         if (buf.empty())
@@ -342,6 +349,55 @@ void    Parser::parseErrorPage(Server & serv_temp)
     pair_temp.second = error_types;
     serv_temp.addErrorPages(pair_temp);
     return ;
+}
+
+
+/*********Parsing Body Size*********/
+
+
+size_t    Parser::parseBodySize(std::string & str_size)
+{
+    size_t  result = 0;
+
+    if (str_size.find_first_not_of("0123456789KkMmGg") != std::string::npos)
+        throw std::invalid_argument(tokenErr("invalid value for \"max_body_size\" directive", *_current));
+    int n_alpha = 0;
+    std::string suffix;
+    for (size_t i = 0; i < str_size.length(); i++)
+    {
+        if (isalpha(str_size[i]))
+        {
+            n_alpha++;
+            if (n_alpha > 1)
+                throw std::invalid_argument(tokenErr("invalid value for \"max_body_size\" directive", *_current));
+            if (i != str_size.length() - 1)
+                throw std::invalid_argument(tokenErr("invalid value for \"max_body_size\" directive", *_current));
+            suffix = str_size[i];
+        }
+    }
+    if (suffix.empty())
+        result = strtol(str_size.c_str(), NULL, 10);
+    else
+    {
+        size_t base = 0;
+        size_t multiplier = 1;
+        std::string str_num = str_size.substr(0, str_size.size() - 1);
+        base = strtol(str_num.c_str(), NULL, 10);
+        if (base > MAX_BODY_SIZE || errno == ERANGE)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+        if (suffix == "K" || suffix == "k")
+            multiplier = 1024;
+        else if (suffix == "M" || suffix == "m")
+            multiplier = 1024 * 1024;
+        else if (suffix == "G" || suffix == "g")
+            multiplier = 1024 * 1024 * 1024;
+        if (base > MAX_BODY_SIZE / multiplier)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+        result = base * multiplier;
+    }
+    if (result > MAX_BODY_SIZE)
+            throw std::overflow_error(tokenErr("max body size too large", *_current));
+    return (result);
 }
 
 

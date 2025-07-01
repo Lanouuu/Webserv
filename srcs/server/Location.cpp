@@ -36,6 +36,7 @@ Location &  Location::operator=(const Location & rhs)
         this->_locationUpload = rhs._locationUpload;
         this->_locationMethod = rhs._locationMethod;
         this->_locationAutoIndex = rhs._locationAutoIndex;
+        this->_locationBodySize = rhs._locationBodySize;
     }
     return (*this);
 }
@@ -86,6 +87,12 @@ void    Location::setIndexes(const std::vector<std::string> & indexes)
     return ;
 }
 
+void    Location::setBodySize(const size_t & size)
+{
+    this->_locationBodySize = size;
+    return ;
+}
+
 std::string Location::getUrl(void) const
 {
     return (this->_locationUrl);
@@ -114,6 +121,11 @@ bool    Location::getIsDirectory(void) const
 std::vector<std::string> const &    Location::getIndexes(void) const
 {
     return (this->_locationIndexes);
+}
+
+size_t  Location::getBodySize(void) const
+{
+    return (this->_locationBodySize);
 }
 
 /****************************************************************************/

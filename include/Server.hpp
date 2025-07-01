@@ -23,6 +23,7 @@ class   Server
         void                        setHost(const std::string & host);
         void                        setPort(const uint16_t & port);
         void                        setIP(const std::string & ip);
+        void                        setBodySize(const size_t & size);
 
         std::string                 getRoot(void) const;
         uint16_t                    getPort(void) const;
@@ -30,7 +31,8 @@ class   Server
         location_map                getLocaMap(void) const;
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
-        int const &                 getSocket(void) const;               
+        int &                       getSocket(void);
+        size_t &                    getBodySize(void);                              
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;
@@ -42,10 +44,9 @@ class   Server
         void                        addIndex(const std::string & index);
         void                        clearIndex(void);
 
-        void                        fillStruct(void);
-        void                        fillSocket(void);
-
-        void                        launchServer(int & epoll_fd);
+        void                          fillStruct(void);
+        void                          fillSocket(void);
+        void                          launchServer(int & epoll_fd);
 
     private:
     
@@ -59,6 +60,7 @@ class   Server
         location_map                _serverLocations;
         sockaddr_in                 _serverSa;
         int                         _serverSocket;
+        size_t                      _serverBodySize;
 };
   
 #endif

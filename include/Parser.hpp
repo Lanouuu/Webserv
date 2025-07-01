@@ -1,6 +1,8 @@
 #ifndef PARSER_HPP
 # define PARSER_HPP
 
+# define MAX_BODY_SIZE 1073741824
+
 # include "Lexer.hpp"
 # include "Server.hpp"
 
@@ -13,7 +15,7 @@ class   Parser : public Lexer
         Parser(const std::string file);
         ~Parser(void);
 
-        void    parseConf(serv_vector & servers);
+        void            parseConf(serv_vector & servers);
         
     private:
 
@@ -28,6 +30,7 @@ class   Parser : public Lexer
         void            parsePort(Server & serv_temp, std::string & value);
         std::string     parseIP(std::string value);
         void            parseErrorPage(Server & serv_temp);
+        size_t          parseBodySize(std::string & size);
 
         t_token         *peek(int offset);
         bool            match(std::string key);
