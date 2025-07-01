@@ -191,3 +191,10 @@ void    Server::clearIndex(void)
     _serverIndexes.clear();
     return ;
 }
+
+void    Server::clearErrPages(void)
+{
+    if (!_serverErrorPages.empty())
+        _serverErrorPages.clear();
+    return ;
+}

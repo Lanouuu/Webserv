@@ -93,6 +93,8 @@ void    Parser::parseServDirective(Server & serv_temp)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         if (value == "index")
             serv_temp.clearIndex();
+        if (value == "error_page")
+            serv_temp.clearErrPages();
         while (_current->type == String)
         {
             if (value == "server_name")

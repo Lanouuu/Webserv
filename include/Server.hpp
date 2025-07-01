@@ -43,10 +43,11 @@ class   Server
         void                        addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
         void                        addIndex(const std::string & index);
         void                        clearIndex(void);
+        void                        clearErrPages(void);
 
-        void                          fillStruct(void);
-        void                          fillSocket(void);
-        void                          launchServer(int & epoll_fd);
+        void                        fillStruct(void);
+        void                        fillSocket(void);
+        void                        launchServer(int & epoll_fd);
 
     private:
     
