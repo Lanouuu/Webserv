@@ -22,6 +22,7 @@ static void    printLocations(location_map locations)
                 std::cout << "[OFF]" << std::endl;
             (*it).second.printIndexes();
             (*it).second.printMethod();
+            (*it).second.printCgi();
         std::cout
             << END
             << std::endl;
@@ -52,6 +53,7 @@ void    printServers(serv_vector & servers)
             << "\t" << "Body_size = " << (*it).getBodySize()
             << std::endl;
             (*it).printErrorPage();
+            (*it).printCgi();
             std::cout
             << END
             << std::endl

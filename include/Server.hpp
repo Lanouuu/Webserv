@@ -2,7 +2,6 @@
 # define SERVER_HPP
 
 # include <inttypes.h>
-# include <map>
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <sys/socket.h>
@@ -32,18 +31,22 @@ class   Server
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
         int &                       getSocket(void);
-        size_t &                    getBodySize(void);                              
+        size_t &                    getBodySize(void);
+        cgi_map                     getCgi(void) const;
+        errpage_map                 getErrPages(void) const;               
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;
         void                        printIndexes(void) const;
+        void                        printCgi(void) const;
 
         void                        addName(const std::string & name);
         void                        addLocation(const std::string & name, const Location & location);
         void                        addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
         void                        addIndex(const std::string & index);
+        void                        addCgi(const std::pair<std::string, std::string> cgi_pair);
         void                        clearIndex(void);
-        void                        clearErrPages(void);
+        void                        deleteErrPage(const std::string & err_page);
 
         void                        fillStruct(void);
         void                        fillSocket(void);
@@ -62,6 +65,7 @@ class   Server
         sockaddr_in                 _serverSa;
         int                         _serverSocket;
         size_t                      _serverBodySize;
+        cgi_map                     _serverCgi;
 };
   
 #endif

@@ -86,15 +86,13 @@ void    Parser::parseServDirective(Server & serv_temp)
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
     }
-    else if (match("server_name") || match("error_page") || match("index"))
+    else if (match("server_name") || match("error_page") || match("index") || match("cgi"))
     {
         advanceAndCheck();
         if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         if (value == "index")
             serv_temp.clearIndex();
-        if (value == "error_page")
-            serv_temp.clearErrPages();
         while (_current->type == String)
         {
             if (value == "server_name")
@@ -109,6 +107,8 @@ void    Parser::parseServDirective(Server & serv_temp)
                 serv_temp.addIndex(_current->value);
                 advanceAndCheck();
             }
+            else if (value == "cgi")
+                parseCgi(serv_temp);
         }
     }
     if (!expect(Semicolon))
@@ -149,6 +149,7 @@ void    Parser::parseLocFile(Server & serv_temp)
     loca_temp.setUrl("." + _current->value);
     loca_temp.setIndexes(serv_temp.getIndexes());
     loca_temp.setBodySize(serv_temp.getBodySize());
+    loca_temp.setCgi(serv_temp.getCgi());
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -176,6 +177,7 @@ void    Parser::parseLocDir(Server & serv_temp)
     loca_temp.setIsDirectory(true);
     loca_temp.setIndexes(serv_temp.getIndexes());
     loca_temp.setBodySize(serv_temp.getBodySize());
+    loca_temp.setCgi(serv_temp.getCgi());
     advanceAndCheck();
     if (!expect(OpenBrace))
         throw std::invalid_argument(tokenErr("expected \"{\" after location identifier", *peek(-2)));
@@ -195,6 +197,7 @@ void    Parser::parseLocDir(Server & serv_temp)
 void    Parser::parseLocaDirective(Location & loca_temp)
 {
     std::string value = _current->value;
+    int flag_cgi = 0;
     if (match("alias") || match("autoindex") || match("max_body_size"))
     {
         advanceAndCheck();
@@ -228,19 +231,27 @@ void    Parser::parseLocaDirective(Location & loca_temp)
         if (_current->type == String)
             throw std::invalid_argument(tokenErr("too many value for \"" + value + "\" directive", *_current));
     }
-    else if (match("index") || match("set_method"))
+    else if (match("index") || match("set_method") || match("cgi"))
     {
         advanceAndCheck();
         if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         if (value == "index")
             loca_temp.clearIndex();
+        if (value == "set_method")
+            loca_temp.clearMethods();
+        if (value == "cgi" && flag_cgi == 0)
+        {
+            loca_temp.clearCgi();
+            flag_cgi++;
+        }
         while (_current->type == String)
         {
             if (value == "index")
             {
                 if (loca_temp.getIsDirectory())
                     loca_temp.addIndex(_current->value);
+                advanceAndCheck();
             }
             else if (value == "set_method")
             {
@@ -248,8 +259,10 @@ void    Parser::parseLocaDirective(Location & loca_temp)
                     throw std::invalid_argument(tokenErr("invalid method for \"set_method\" directive", *_current));
                 else
                     loca_temp.addMethod(_current->value);
+                advanceAndCheck();
             }
-            advanceAndCheck();
+            else if (value == "cgi")
+                parseCgi(loca_temp);
         }
    }
     if (!expect(Semicolon))
@@ -322,6 +335,24 @@ std::string Parser::parseIP(std::string value)
 /*********Parsing Error Pages*********/
 
 
+static void  checkErrPage(Server & serv_temp, long & err_temp)
+{
+    errpage_map temp = serv_temp.getErrPages();
+
+    for (errpage_map::const_iterator it = temp.begin(); it != temp.end(); it++)
+    {
+        std::vector<int> vtemp = (*it).second;
+        for (std::vector<int>::const_iterator vit = vtemp.begin(); vit != vtemp.end(); vit++)
+        {
+            if (*vit == err_temp)
+            {
+                serv_temp.deleteErrPage((*it).first);
+                break ;
+            }
+        }
+    }
+}
+
 void    Parser::parseErrorPage(Server & serv_temp)
 {
     std::pair<std::string, std::vector<int> > pair_temp;
@@ -340,6 +371,7 @@ void    Parser::parseErrorPage(Server & serv_temp)
                 throw std::invalid_argument(tokenErr("invalid error type for \"error_page\" directive", *_current));
             long    err_temp;
             err_temp = strtol(_current->value.c_str(), NULL, 10);
+            checkErrPage(serv_temp, err_temp);
             error_types.push_back(err_temp);
         }
         advanceAndCheck();
@@ -451,4 +483,9 @@ void    Parser::advanceAndCheck(void)
         ++_current;
     checkEOF();
     return ;
+}
+
+bool    Parser::isExecutableFile(const std::string & path) 
+{
+    return (access(path.c_str(), X_OK) == 0);
 }

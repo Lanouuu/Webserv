@@ -88,6 +88,16 @@ size_t &    Server::getBodySize(void)
     return (this->_serverBodySize);
 }
 
+cgi_map Server::getCgi(void) const
+{
+    return (this->_serverCgi);
+}
+
+errpage_map Server::getErrPages(void) const
+{
+    return (this->_serverErrorPages);
+}
+
 /****************************************************************************/
 /*                           Members Functions                              */
 /****************************************************************************/
@@ -129,6 +139,20 @@ void    Server::printIndexes(void) const
     return ;
 }
 
+void    Server::printCgi(void) const
+{
+    int i = 1;
+    if (!_serverCgi.empty())
+    {
+        for (cgi_map::const_iterator it = _serverCgi.begin(); it != _serverCgi.end(); it++)
+        {
+            std::cout
+                << "\tCgi [" << i << "] " << (*it).first << " = " << (*it).second << std::endl;
+            i++;
+        }
+    }
+}
+
 void    Server::addName(const std::string & name)
 {
     this->_serverName.push_back(name);
@@ -144,6 +168,12 @@ void    Server::addLocation(const std::string & name, const Location & location)
 void    Server::addErrorPages(const std::pair<std::string, std::vector<int> > & pages)
 {
     _serverErrorPages.insert(pages);
+    return ;
+}
+
+void Server::addCgi(const std::pair<std::string, std::string> cgi_pair)
+{
+    _serverCgi.insert(cgi_pair);
     return ;
 }
 
@@ -192,9 +222,9 @@ void    Server::clearIndex(void)
     return ;
 }
 
-void    Server::clearErrPages(void)
+void    Server::deleteErrPage(const std::string & err_page)
 {
     if (!_serverErrorPages.empty())
-        _serverErrorPages.clear();
+        _serverErrorPages.erase(err_page);
     return ;
 }
