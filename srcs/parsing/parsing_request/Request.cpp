@@ -311,272 +311,9 @@ int Request::parse_request(Client & client, Server const & server) {
             break;
         }
     }
-    if(_methode == "POST")
-    {
-        if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
-            return 1;
-        for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
-        {
-            if(!isdigit(*it))
-                return 400;
-        }
-        if(_content_type == "application/x-www-form-urlencoded\r")
-        {
-            if(parse_body_form() == 1 && check_request_format_post() == 1)
-            {
-                std::cout << "error in parse_body_form" << std::endl;
-                return 400;
-            }
-            std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
-            std::ofstream new_file;
-            std::string filename = _body_data.find("File+name")->second.c_str();
-            std::ifstream test_open_file(filename.c_str());
-            if(test_open_file.is_open())
-            {
-                std::cout << "File name already exist, add suffix" << std::endl;
-                filename += "_";
-                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
-                {
-                    std::stringstream ss;
-                    ss << i;
-                    filename += ss.str();
-                    if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
-                    {
-                        if (errno == EEXIST)
-                        {
-                            size_t pos = filename.find_last_of('_');
-                            filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
-                        }
-                        return 500;
-                    }
-                    else
-                        break;
-                }
-            }
-            new_file.open(filename.c_str());
-            if(!new_file.is_open())
-            {
-                std::cout << "error creating new file" << std::endl;
-                return 500;
-            }
-            std::cout << "File = " << filename << std::endl;
-            decode_content();
-            new_file << _body_data.find("Content")->second.c_str();
-            new_file.close();
-        }
-        else if(_content_type == "text/plain\r")
-        {
-            std::string filename = "upload.txt";
-            std::ofstream new_file;
-            std::ifstream test_open_file(filename.c_str());
-            if(test_open_file.is_open())
-            {
-                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
-                {
-                    std::ostringstream oss;
-                    oss << "upload_" << i << ".txt";
-                    filename = oss.str();
-    
-                    if (open(filename.c_str(), O_CREAT | O_EXCL | O_RDWR, 0644) == -1)
-                    {
-                        if (errno == EEXIST)
-                            continue;
-                        return 500;
-                    }
-                    else
-                    {
-                        break;
-                        //std::cerr << "Erreur d'ouverture du fichier\n";
-                    }
-                }
-            }
-            new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
-            if(!new_file.is_open())
-            {
-                std::cout << "error creating new file" << std::endl;
-                return 500;
-            }
-            std::cout << "upload file = " << filename.c_str() << std::endl;
-            new_file.write(&_body[0], _body.size());
-            new_file.close();
-        }
-        else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
-        {
-            std::string content_disposition, name, filename, content_type, content;
-            std::vector<char> line;
-            if (check_request_format_post_multi() == 1)
-                return 400;
-            std::string boundary = "--";
-            size_t pos = _content_type.find("boundary=", 0);
-            if (pos == std::numeric_limits<size_t>::max())
-            {
-                return 400;
-            }
-            boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
-            // std::cout << "boundary = " << boundary << std::endl;
-            // std::cout << "boundary size = " << boundary.size() << std::endl;
-            std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            if (begin == _body.end())
-                return 400;
-            std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            if (end == _body.end())
-            {
-                // std::cout << "OK" << std::endl;
-                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
-                {
-                    if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
-                    boundary += "--\r\n";
-                    // std::cout << "end boudary = " << boundary << std::endl;
-                    break;
-                }
-                end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            }
-            // std::cout << "End = " << *end << std::endl;
-            size_t boundary_pos = end - _body.begin();
-            begin += boundary.size();
-            for (;begin != end; begin++)
-            {
-                line.push_back(*begin);
-            }
-            for (size_t i = 0; i < line.size(); i++)
-                std::cout << line[i];
-            std::cout << std::endl;
-            //upload
-            const char keyword[] = {"Content-Disposition: form-data; name=\"filename\"; filename="};
-            begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
-            // std::cout << "begin = " << begin - line.begin() << std::endl;
-            if (begin != line.end())
-            {
-                const char pos[] = {'\r'};
-                end = std::search(line.begin(), line.end(), pos, pos + sizeof(pos));
-                //std::cout << "end = " << end - line.begin() << std::endl;
-                if (end != line.end())
-                {
-                    for (std::vector<char>::const_iterator it = line.begin() + 58; it != end; it++)
-                        filename += *it;
-                    filename.erase(0, 1);
-                    filename.erase(filename.size() - 1, 1);
-                    std::cout << "Filename = " << filename << std::endl;
-                   // std::cout << "END" << std::endl;
-                }
-            }
-            else
-            {
-                std::cout << "Pas ok 0" << std::endl;
-                return 400;
-            }
-            begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            // std::cout << "boudary = " << boundary << std::endl;
-            // std::cout << "begin = " << begin - _body.begin() << std::endl;
-            end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-           // std::cout << "end = " << end - _body.begin() << std::endl;
-            if (end != _body.end())
-            {
-               // std::cout << "OK" << std::endl;
-                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
-                {
-                    if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
-                    boundary += "--\r\n";
-                   // std::cout << "end boudary = " << boundary << std::endl;
-                    break;
-                }
-                end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
-            }
-            line.erase(line.begin(), line.end() - 1);
-            for (;begin != end; begin++)
-            {
-                line.push_back(*begin);
-            }
-            const char keyword2[] = {"Content-Type:"};
-            begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
-            if (begin != line.end())
-            {
-               // std::cout << "pos = " << pos << std::endl;
-                for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
-                {
-                    content_type += *it;
-                }
-                std::cout << "Content-type = " << content_type << std::endl;
-            }
-            else
-            {
-                std::cout << "Pas ok" << std::endl;
-                return 400;
-            }
-            const char keyword3[] = {'\r', '\n', '\r', '\n'};
-            begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
-            if (begin != line.end())
-            {
-                for (std::vector<char>::const_iterator it = begin + 4; it != line.end() - boundary.size() - 3; it++)
-                    content += *it;
-                // std::cout << "pos = " << pos << std::endl;
-                std::cout << "content = " << content << std::endl;
-            }
-            else
-            {
-                std::cout << "Return" << std::endl;
-                return 400;
-            }
-            std::ofstream new_file;
-            std::ifstream test_open_file(filename.c_str());
-            if(test_open_file.is_open())
-            {
-                std::cout << "File name already exist, add suffix" << std::endl;
-                filename += "_";
-                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
-                {
-                    std::stringstream ss;
-                    ss << i;
-                    filename += ss.str();
-                    if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
-                    {
-                        if (errno == EEXIST)
-                        {
-                            size_t pos = filename.find_last_of('_');
-                            filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
-                        }
-                    }
-                    else
-                        break;
-                }
-            }
-            new_file.open(filename.c_str());
-            if(!new_file.is_open())
-            {
-                std::cout << "error creating new file" << std::endl;
-                return 500;
-            }
-            std::cout << "File = " << filename << std::endl;
-            new_file << content;
-            new_file.close();
-            // std::cout << "line = " << line << std::endl;
-        }
-        else
-        {
-            std::cout << "ici" << std::endl;
-            return 415;
-        }
-        succes_code = 201;
-    }
-    else if (_methode == "DELETE")
-    {
-        _url.erase(0, 1);
-        std::ifstream file(_url.c_str());
-
-        if(file.is_open())
-        {
-            std::remove(_url.c_str());
-            if (std::ifstream(_url.c_str()))
-            {
-                std::cout << "Error, file could no be deleted" << std::endl;
-            }
-            succes_code = 204;
-        }
-        else
-            return 404;
-    }
+    int j = get_request_type(_methode);
+    int (Request::*methodsTab[])(int &) = {&Request::post_request_handler, &Request::delete_request_handler};
+    (this->*methodsTab[j])(succes_code);
     if (_methode == "GET")
         succes_code = 200;
     std::string response;
@@ -936,4 +673,294 @@ std::string Request::create_response(int succes_code, Server const & server) {
             response << "HTTP/1.1 204 No Content\r\n";
     }
     return response.str();
+}
+
+int Request::get_request_type(std::string const & method) const
+{
+    int i = 0;
+    std::string methods[] = {"GET", "POST", "DELETE"};
+
+    for (; i < 3; i++)
+    {
+        if (method == methods[i])
+            break ;
+    }
+    return i;
+}
+
+int  Request::post_request_handler(int & success_code)
+{
+    if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
+        return 1;
+    for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
+    {
+        if(!isdigit(*it))
+            return 400;
+    }
+    if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
+        return 1;
+    for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
+    {
+        if(!isdigit(*it))
+            return 400;
+    }
+    if(_content_type == "application/x-www-form-urlencoded\r")
+    {
+        if(parse_body_form() == 1 && check_request_format_post() == 1)
+        {
+            std::cout << "error in parse_body_form" << std::endl;
+            return 400;
+        }
+        std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
+        std::ofstream new_file;
+        std::string filename = _body_data.find("File+name")->second.c_str();
+        std::ifstream test_open_file(filename.c_str());
+        if(test_open_file.is_open())
+        {
+            std::cout << "File name already exist, add suffix" << std::endl;
+            filename += "_";
+            for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+            {
+                std::stringstream ss;
+                ss << i;
+                filename += ss.str();
+                if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                {
+                    if (errno == EEXIST)
+                    {
+                        size_t pos = filename.find_last_of('_');
+                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                    }
+                    return 500;
+                }
+                else
+                    break;
+            }
+        }
+        new_file.open(filename.c_str());
+        if(!new_file.is_open())
+        {
+            std::cout << "error creating new file" << std::endl;
+            return 500;
+        }
+        std::cout << "File = " << filename << std::endl;
+        decode_content();
+        new_file << _body_data.find("Content")->second.c_str();
+        new_file.close();
+    }
+    else if(_content_type == "text/plain\r")
+    {
+        std::string filename = "upload.txt";
+        std::ofstream new_file;
+        std::ifstream test_open_file(filename.c_str());
+        if(test_open_file.is_open())
+        {
+            for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+            {
+                std::ostringstream oss;
+                oss << "upload_" << i << ".txt";
+                filename = oss.str();
+
+                if (open(filename.c_str(), O_CREAT | O_EXCL | O_RDWR, 0644) == -1)
+                {
+                    if (errno == EEXIST)
+                        continue;
+                    return 500;
+                }
+                else
+                {
+                    break;
+                    //std::cerr << "Erreur d'ouverture du fichier\n";
+                }
+            }
+        }
+        new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
+        if(!new_file.is_open())
+        {
+            std::cout << "error creating new file" << std::endl;
+            return 500;
+        }
+        std::cout << "upload file = " << filename.c_str() << std::endl;
+        new_file.write(&_body[0], _body.size());
+        new_file.close();
+    }
+    else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
+    {
+        std::string content_disposition, name, filename, content_type, content;
+        std::vector<char> line;
+        if (check_request_format_post_multi() == 1)
+            return 400;
+        std::string boundary = "--";
+        size_t pos = _content_type.find("boundary=", 0);
+        if (pos == std::numeric_limits<size_t>::max())
+        {
+            return 400;
+        }
+        boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
+        // std::cout << "boundary = " << boundary << std::endl;
+        // std::cout << "boundary size = " << boundary.size() << std::endl;
+        std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+        if (begin == _body.end())
+            return 400;
+        std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+        if (end == _body.end())
+        {
+            // std::cout << "OK" << std::endl;
+            for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
+            {
+                if (boundary.size() >= 2)
+                    boundary.erase(boundary.size() - 2);
+                boundary += "--\r\n";
+                // std::cout << "end boudary = " << boundary << std::endl;
+                break;
+            }
+            end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+        }
+        // std::cout << "End = " << *end << std::endl;
+        size_t boundary_pos = end - _body.begin();
+        begin += boundary.size();
+        for (;begin != end; begin++)
+        {
+            line.push_back(*begin);
+        }
+        for (size_t i = 0; i < line.size(); i++)
+            std::cout << line[i];
+        std::cout << std::endl;
+        //upload
+        const char keyword[] = {"Content-Disposition: form-data; name=\"filename\"; filename="};
+        begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
+        // std::cout << "begin = " << begin - line.begin() << std::endl;
+        if (begin != line.end())
+        {
+            const char pos[] = {'\r'};
+            end = std::search(line.begin(), line.end(), pos, pos + sizeof(pos));
+            //std::cout << "end = " << end - line.begin() << std::endl;
+            if (end != line.end())
+            {
+                for (std::vector<char>::const_iterator it = line.begin() + 58; it != end; it++)
+                    filename += *it;
+                filename.erase(0, 1);
+                filename.erase(filename.size() - 1, 1);
+                std::cout << "Filename = " << filename << std::endl;
+                // std::cout << "END" << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "Pas ok 0" << std::endl;
+            return 400;
+        }
+        begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+        // std::cout << "boudary = " << boundary << std::endl;
+        // std::cout << "begin = " << begin - _body.begin() << std::endl;
+        end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
+        // std::cout << "end = " << end - _body.begin() << std::endl;
+        if (end != _body.end())
+        {
+            // std::cout << "OK" << std::endl;
+            for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
+            {
+                if (boundary.size() >= 2)
+                    boundary.erase(boundary.size() - 2);
+                boundary += "--\r\n";
+                // std::cout << "end boudary = " << boundary << std::endl;
+                break;
+            }
+            end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
+        }
+        line.erase(line.begin(), line.end() - 1);
+        for (;begin != end; begin++)
+        {
+            line.push_back(*begin);
+        }
+        const char keyword2[] = {"Content-Type:"};
+        begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
+        if (begin != line.end())
+        {
+            // std::cout << "pos = " << pos << std::endl;
+            for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
+            {
+                content_type += *it;
+            }
+            std::cout << "Content-type = " << content_type << std::endl;
+        }
+        else
+        {
+            std::cout << "Pas ok" << std::endl;
+            return 400;
+        }
+        const char keyword3[] = {'\r', '\n', '\r', '\n'};
+        begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
+        if (begin != line.end())
+        {
+            for (std::vector<char>::const_iterator it = begin + 4; it != line.end() - boundary.size() - 3; it++)
+                content += *it;
+            // std::cout << "pos = " << pos << std::endl;
+            std::cout << "content = " << content << std::endl;
+        }
+        else
+        {
+            std::cout << "Return" << std::endl;
+            return 400;
+        }
+        std::ofstream new_file;
+        std::ifstream test_open_file(filename.c_str());
+        if(test_open_file.is_open())
+        {
+            std::cout << "File name already exist, add suffix" << std::endl;
+            filename += "_";
+            for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+            {
+                std::stringstream ss;
+                ss << i;
+                filename += ss.str();
+                if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                {
+                    if (errno == EEXIST)
+                    {
+                        size_t pos = filename.find_last_of('_');
+                        filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                    }
+                }
+                else
+                    break;
+            }
+        }
+        new_file.open(filename.c_str());
+        if(!new_file.is_open())
+        {
+            std::cout << "error creating new file" << std::endl;
+            return 500;
+        }
+        std::cout << "File = " << filename << std::endl;
+        new_file << content;
+        new_file.close();
+        // std::cout << "line = " << line << std::endl;
+    }
+    else
+    {
+        std::cout << "ici" << std::endl;
+        return 415;
+    }
+    success_code = 201;
+    return 0;
+}
+
+int Request::delete_request_handler(int & success_code)
+{
+    _url.erase(0, 1);
+    std::ifstream file(_url.c_str());
+
+    if(file.is_open())
+    {
+        std::remove(_url.c_str());
+        if (std::ifstream(_url.c_str()))
+        {
+            std::cout << "Error, file could no be deleted" << std::endl;
+        }
+        success_code = 204;
+    }
+    else
+        return 404;
+    return 0;
 }
