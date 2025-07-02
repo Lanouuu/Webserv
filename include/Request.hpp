@@ -65,6 +65,9 @@ class Request {
         int parse_body_form();
         void    add_request(char buffer[], size_t size);
         void    decode_content();
+        int urlencoded_handler();
+        int textPlain_Handler();
+        int multipart_formData_handler();
         std::string convert_to_string();
 
         std::string create_response(int succes_code, Server const & server);
