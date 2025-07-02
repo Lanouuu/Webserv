@@ -15,6 +15,7 @@ int main(int ac, char **av, char **env)
         int         epoll_fd;
         int         n_event;
         size_t      index = 0;
+
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
         parsingConfFile(av[1], servers);
@@ -57,10 +58,11 @@ int main(int ac, char **av, char **env)
                     {
                         memset(&buf, 0, 255);
                         readed = recv(temp.getClientFd(), buf, 255, 0);
-                        std::cout << "readed = " << readed << std::endl;
+                        // std::cout << "readed = " << readed << std::endl;
                         temp.getRequest().add_request(buf, sizeof(buf));
-                        std::cout << buf << std::endl;
+                        std::cout << buf << std::flush;
                     }
+                    index = 0;
                     for(;index < servers.size(); index++)
                     {
                         if (servers[index].getSocket() == socket_fd)

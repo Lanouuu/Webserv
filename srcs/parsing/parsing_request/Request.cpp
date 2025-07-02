@@ -93,10 +93,26 @@ int Request::check_request_format_get(std::string const &req) {
     return 0;
 }
 
+int Request::getEOF_Pos()
+{
+    int i =  _request.end() - _request.begin();
+    std::cout << "I = " << i << std::endl;
+    for (std::vector<char>::const_iterator it = _request.end(); it != _request.begin(); it--)
+    {
+        if (*it == '\n')
+            break;
+        i--;
+    }
+    return i;
+}
+
 //check si on a bien \r\n a la fin des lignes de la requete post, retunr error 1
 int Request::check_request_format_post() {
     int end_found = 0;
-    if(*(_request.end() - 2) != '\n' || *(_request.end() - 3) != '\r')
+    
+    int end = getEOF_Pos();
+    std::cout << "req end = " << static_cast<int>(_request[end]) << std::endl;
+    if(_request[end] != '\n' || _request[end - 1] != '\r')
     {
         return 1;
     }
@@ -133,7 +149,8 @@ int Request::check_request_format_post() {
 
 int Request::check_request_format_post_multi() {
     int end_found = 0;
-    if(*(_request.end() - 2) != '\n' || *(_request.end() - 3) != '\r')
+    int end = getEOF_Pos();
+    if(_request[end] != '\n' || _request[end - 1] != '\r')
     {
         return 1;
     }
@@ -271,6 +288,7 @@ int Request::parse_request(Client & client, Server const & server) {
     std::string word;
     int succes_code = 0;
     std::string req;
+
     req = convert_to_string();
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
     {
@@ -359,7 +377,6 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::cout << "error creating new file" << std::endl;
                 return 500;
             }
-            std::cout << "File = " << filename << std::endl;
             decode_content();
             new_file << _body_data.find("Content")->second.c_str();
             new_file.close();
@@ -409,56 +426,40 @@ int Request::parse_request(Client & client, Server const & server) {
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
-            {
                 return 400;
-            }
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
-            // std::cout << "boundary = " << boundary << std::endl;
-            // std::cout << "boundary size = " << boundary.size() << std::endl;
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
                 return 400;
             std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (end == _body.end())
             {
-                // std::cout << "OK" << std::endl;
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
                         boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
-                    // std::cout << "end boudary = " << boundary << std::endl;
                     break;
                 }
                 end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             }
-            // std::cout << "End = " << *end << std::endl;
             size_t boundary_pos = end - _body.begin();
             begin += boundary.size();
             for (;begin != end; begin++)
             {
                 line.push_back(*begin);
             }
-            for (size_t i = 0; i < line.size(); i++)
-                std::cout << line[i];
-            std::cout << std::endl;
             //upload
-            const char keyword[] = {"Content-Disposition: form-data; name=\"filename\"; filename="};
+            const char keyword[] = {"Content-Disposition: form-data; name=\"filename\""};
             begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
-            // std::cout << "begin = " << begin - line.begin() << std::endl;
             if (begin != line.end())
             {
                 const char pos[] = {'\r'};
-                end = std::search(line.begin(), line.end(), pos, pos + sizeof(pos));
-                //std::cout << "end = " << end - line.begin() << std::endl;
+                end = std::search(line.begin() + 51, line.end(), pos, pos + sizeof(pos));
                 if (end != line.end())
                 {
-                    for (std::vector<char>::const_iterator it = line.begin() + 58; it != end; it++)
+                    for (std::vector<char>::const_iterator it = line.begin() + 51; it != end; it++) 
                         filename += *it;
-                    filename.erase(0, 1);
-                    filename.erase(filename.size() - 1, 1);
-                    std::cout << "Filename = " << filename << std::endl;
-                   // std::cout << "END" << std::endl;
                 }
             }
             else
@@ -467,19 +468,14 @@ int Request::parse_request(Client & client, Server const & server) {
                 return 400;
             }
             begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            // std::cout << "boudary = " << boundary << std::endl;
-            // std::cout << "begin = " << begin - _body.begin() << std::endl;
             end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-           // std::cout << "end = " << end - _body.begin() << std::endl;
             if (end != _body.end())
             {
-               // std::cout << "OK" << std::endl;
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
                         boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
-                   // std::cout << "end boudary = " << boundary << std::endl;
                     break;
                 }
                 end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
@@ -493,26 +489,25 @@ int Request::parse_request(Client & client, Server const & server) {
             begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
             if (begin != line.end())
             {
-               // std::cout << "pos = " << pos << std::endl;
                 for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
                 {
                     content_type += *it;
                 }
                 std::cout << "Content-type = " << content_type << std::endl;
             }
-            else
-            {
-                std::cout << "Pas ok" << std::endl;
-                return 400;
-            }
+            // else
+            // {
+            //     std::cout << "Pas ok" << std::endl;
+            //     return 400;
+            // }
             const char keyword3[] = {'\r', '\n', '\r', '\n'};
             begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
-            if (begin != line.end())
-            {
-                for (std::vector<char>::const_iterator it = begin + 4; it != line.end() - boundary.size() - 3; it++)
-                    content += *it;
-                // std::cout << "pos = " << pos << std::endl;
-                std::cout << "content = " << content << std::endl;
+            std::string delimiter = "\r\n";
+            std::vector<char>::iterator body_start = begin + 4; // skip \r\n\r\n
+            std::vector<char>::iterator body_end = std::search(body_start,line.end(),delimiter.begin(),delimiter.end());
+
+            if (body_end != line.end()) {
+                content.assign(body_start, body_end);
             }
             else
             {
@@ -520,7 +515,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 return 400;
             }
             std::ofstream new_file;
-            std::ifstream test_open_file(filename.c_str());
+            std::ifstream test_open_file(("./upload/" + filename).c_str());
             if(test_open_file.is_open())
             {
                 std::cout << "File name already exist, add suffix" << std::endl;
@@ -542,7 +537,7 @@ int Request::parse_request(Client & client, Server const & server) {
                         break;
                 }
             }
-            new_file.open(filename.c_str());
+            new_file.open(("./upload/" + filename).c_str());
             if(!new_file.is_open())
             {
                 std::cout << "error creating new file" << std::endl;
@@ -551,7 +546,6 @@ int Request::parse_request(Client & client, Server const & server) {
             std::cout << "File = " << filename << std::endl;
             new_file << content;
             new_file.close();
-            // std::cout << "line = " << line << std::endl;
         }
         else
         {
@@ -746,6 +740,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         location_map::iterator it = locations.find(_url);
         if (it != locations.end())
         {
+            std::cout << "location trouver" << std::endl;
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -764,6 +759,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         {
             if (_url[0] == '/')
                 _url.erase(0, 1);
+            std::cout << "stat url = " << _url << std::endl;
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -772,6 +768,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
                     if (_url[_url.size() - 1] != '/')
                         _url += '/';
                     temp = _url;
+                    std::cout << "_urlRoot = " << _url << std::endl;
                     _url = server.getRoot() + temp + server.getIndexes().front();
                 }
                 else if( s.st_mode & S_IFREG )
@@ -785,11 +782,16 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     if (_url[0] == '/')
         _url.erase(0, 1);
+    std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
+    if (!file)
+        std::cout << "FIle not found" << std::endl;
+    std::cout << "File = " << _url << std::endl;
     std::ostringstream ss;
     std::string body;
     std::stringstream html;
     if (!file &&  s.st_mode & S_IFREG) {
+        std::cout << "Could not find " << _url << std::endl;
         std::ifstream error_file("www/codes_pages/404.html", std::ios::binary);
         ss << error_file.rdbuf();
         body = ss.str();
@@ -806,6 +808,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         _url = temp;
         if (_url[0] == '/')
             _url.erase(0, 1);
+        std::cout << "OpenDir url = " << _url << std::endl;
         DIR *dir = opendir(_url.c_str());
         struct dirent *openDir = NULL;
         struct stat currentDir;
@@ -813,11 +816,15 @@ std::string Request::create_response(int succes_code, Server const & server) {
         while ((openDir = readdir(dir)) != NULL)
         {
             std::string file(openDir->d_name);
+            std::cout << "file = " << file << std::endl;
+            std::cout << "dans readdir" << std::endl;
             if (openDir->d_name[0] == '.')
                 continue;
+            std::cout << "stat file = " << file.c_str() << std::endl;
             stat((_url + file).c_str(), &currentDir);
-            if(currentDir.st_mode & S_IFDIR )
+            if(currentDir.st_mode & S_IFDIR)
             {
+                std::cout << "is a dir" << std::endl;
                 // it's a directory
                 file += '/';
             }
