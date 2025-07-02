@@ -15,10 +15,10 @@ int main(int ac, char **av, char **env)
         int         epoll_fd;
         int         n_event;
         size_t      index = 0;
-
+        
+        parsingConfFile(av[1], servers);
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
-        parsingConfFile(av[1], servers);
         launchServers(servers, epoll_fd);
         struct epoll_event events[MAX_EVENTS]; // tableau d'event
         while (1)
@@ -33,7 +33,7 @@ int main(int ac, char **av, char **env)
                     Client temp;
                     struct sockaddr_in clientInfo;
                     socklen_t size = sizeof(clientInfo);
-                    temp.setFd(accept(socket_fd, (struct sockaddr *)&clientInfo, &size)); // -> utiliser le setter .setFd();
+                    temp.setFd(accept(socket_fd, (struct sockaddr *)&clientInfo, &size));
                     for(int i = 0; i < std::numeric_limits<int>::max(); i++)
                     {
                         std::stringstream ss;
