@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include <sys/wait.h>
 #include <dirent.h>
+#include <iterator>
 
 Request::Request() {
 
@@ -144,40 +145,61 @@ int Request::check_request_format_post() {
         return 1;
     }
     std::cout << "format post xform ok" << std::endl;
+
     return 0;
 }
 
 int Request::check_request_format_post_multi() {
     int end_found = 0;
-    int end = getEOF_Pos();
-    if(_request[end] != '\n' || _request[end - 1] != '\r')
-    {
+    unsigned long end = getEOF_Pos();
+    if (end == 0 || end >= _request.size()) {
+        std::cout << "error: end out of bounds\n";
         return 1;
     }
-    for(std::vector<char>::const_iterator it = _request.begin(); it != _request.end(); it++)
+    if(_request[end] != '\n' || _request[end - 1] != '\r')
     {
+        std::cout << "error ici 0\n";
+        return 1;
+    }
+    for(std::vector<char>::iterator it = _request.begin(); it != _request.end(); it++)
+    {
+        std::vector<char>::const_iterator next = it + 1;
+        if (next == _request.end())
+            break;
         if(*it == '\r' && *(it + 1) != '\n' )
         {
+            std::cout << "error ici 1\n";
             return 1;
         }
         if(isalnum(*it) == 0 && *it == _request[0])
         {
+            std::cout << "error ici 2\n";
             return 1;
         }
-        if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
+        if(std::distance(it, _request.end()) >= 4 && *it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
         {
             ++end_found;
-           for (std::vector<char>::const_iterator it2 = it + 4; it2 != _request.end(); it2++)
-           {
-                if ((*it2 == '\r' && *(it2 + 1) != '\n') || (*it2 == '\n' && *(it2 - 1) != '\r'))
+
+            std::vector<char>::const_iterator it2 = it + 4;
+            while (it2 != _request.end()) {
+                std::vector<char>::const_iterator next2 = it2 + 1;
+                if (next2 == _request.end())
+                    break;
+
+                if ((*it2 == '\r' && *next2 != '\n') ||
+                    (*it2 == '\n' && *(it2 - 1) != '\r'))
                 {
+                    std::cout << "error ici 3\n";
                     return 1;
                 }
-           }
+
+                ++it2;
+            }
             break;
         }
         else if(*it == '\r' && *(it + 1) && isalnum(*(it + 1)) == 0 && *(it + 1) != '\n' && end_found == 0)
         {
+            std::cout << "error ici 4\n";
             return 1;
         }
     }
@@ -300,6 +322,7 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     if(req.compare(0, 4, "POST") == 0 && check_request_format_post() == 1 && check_request_format_post_multi() == 1)
     {
+        std::cout << "-------- bad req upload file --------\n";
         response = create_response_html(400, "badreq");
         send(client.getClientFd(), response.c_str(), response.length(), 0);
         close(client.getClientFd());
@@ -438,6 +461,7 @@ int Request::parse_request(Client & client, Server const & server) {
             new_file.open(filename.c_str());
             if(!new_file.is_open())
             {
+                // std::cout << "----------------- error ici ----------------------\n";
                 response = create_response_html(500, "ise");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
@@ -492,38 +516,31 @@ int Request::parse_request(Client & client, Server const & server) {
         {
             std::string content_disposition, name, filename, content_type, content;
             std::vector<char> line;
-            if (check_request_format_post_multi() == 1)
-                {
-                    response = create_response_html(400, "badreq");
-                    send(client.getClientFd(), response.c_str(), response.length(), 0);
-                    close(client.getClientFd());
-                    return 1;
-                }
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
-                {
-                    response = create_response_html(400, "badreq");
-                    send(client.getClientFd(), response.c_str(), response.length(), 0);
-                    close(client.getClientFd());
-                    return 1;
-                }
+            {
+                response = create_response_html(400, "badreq");
+                send(client.getClientFd(), response.c_str(), response.length(), 0);
+                close(client.getClientFd());
+                return 1;
+            }
             boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
-                {
-                    response = create_response_html(400, "badreq");
-                    send(client.getClientFd(), response.c_str(), response.length(), 0);
-                    close(client.getClientFd());
-                    return 1;
-                }
+            {
+                response = create_response_html(400, "badreq");
+                send(client.getClientFd(), response.c_str(), response.length(), 0);
+                close(client.getClientFd());
+                return 1;
+            }
             std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (end == _body.end())
             {
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
+                    boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
                     break;
                 }
@@ -545,7 +562,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 if (end != line.end())
                 {
                     for (std::vector<char>::const_iterator it = line.begin() + 51; it != end; it++) 
-                        filename += *it;
+                    filename += *it;
                 }
             }
             else
@@ -562,7 +579,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
                 {
                     if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
+                    boundary.erase(boundary.size() - 2);
                     boundary += "--\r\n";
                     break;
                 }
@@ -596,7 +613,7 @@ int Request::parse_request(Client & client, Server const & server) {
             std::string delimiter = "\r\n";
             std::vector<char>::iterator body_start = begin + 4; // skip \r\n\r\n
             std::vector<char>::iterator body_end = std::search(body_start,line.end(),delimiter.begin(),delimiter.end());
-
+                    
             if (body_end != line.end()) {
                 content.assign(body_start, body_end);
             }
@@ -631,6 +648,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 }
             }
             new_file.open(("./upload/" + filename).c_str());
+            if(!new_file)
             {
                 response = create_response_html(500, "ise");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
