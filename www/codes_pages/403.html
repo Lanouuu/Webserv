@@ -1,12 +1,3 @@
-#!/bin/sh
-echo "HTTP/1.1 200 OK"
-echo "Content-Type: text/html";
-echo "";
-
-tmp=`/bin/date`
-
-cat << EOF
-
 <!DOCTYPE html>
 <html>
     <head>
@@ -22,9 +13,9 @@ cat << EOF
             </div>
         </header>
         <main>
-            <div class="text_btn">
-                <h1>The current date on the server is</h1>
-                <h3>$tmp</h3>
+            <div class="error">
+                <h1>Oops !</h1>
+                <h3>403 - Forbidden</h3>
                 <a href="/www/index.html" class="btn-home">Go to home page</a>
             </div>
         </main>
@@ -33,5 +24,3 @@ cat << EOF
         <p>© 2025 Webserv, Inc. aciezadl - jaung - ade-fran</p>
     </footer>
 </html>
-
-EOF

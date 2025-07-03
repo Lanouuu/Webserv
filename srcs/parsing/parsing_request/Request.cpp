@@ -387,8 +387,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     std::remove(("./upload/" + filename_to_delete).c_str());
                     if (std::ifstream(("./upload/" + filename_to_delete).c_str()))
                     {
-                        std::cout << "Error, file could no be deleted" << std::endl;
-                        response = create_response(403, server); // pas teste encore, surement une page 403.html a faire
+                        response = create_response_html(403, "forbidden");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
                         close(client.getClientFd());
                         return 1;
@@ -644,8 +643,10 @@ int Request::parse_request(Client & client, Server const & server) {
         }
         else
         {
-            std::cout << "ici" << std::endl;
-            return 415;
+            response = create_response_html(415, "umt");
+            send(client.getClientFd(), response.c_str(), response.length(), 0);
+            close(client.getClientFd());
+            return 1;
         }
         succes_code = 201;
     }
@@ -1063,6 +1064,40 @@ std::string Request::create_response_html(int succes_code, std::string mode) {
         response << ss.str();
         return response.str();
     }
+    else if(succes_code == 400 && mode == "badreq")
+    {
+        std::stringstream ss;
+        std::string body;
+        std::ifstream file("www/codes_pages/400.html", std::ios::binary);
+        if (!file.is_open())
+            return create_response_html(500, "ise");
+        ss << file.rdbuf();
+        body = ss.str();
+        response << "HTTP/1.1 400 Bad Request\r\n";
+        response << "Content-Type: " << "text/html" << "\r\n";
+        response << "Content-Length: " << body.size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << body;
+        return response.str();
+    }
+    else if(succes_code == 403 && mode == "forbidden")
+    {
+        std::stringstream ss;
+        std::string body;
+        std::ifstream file("www/codes_pages/403.html", std::ios::binary);
+        if (!file.is_open())
+            return create_response_html(500, "ise");
+        ss << file.rdbuf();
+        body = ss.str();
+        response << "HTTP/1.1 403 Forbidden\r\n";
+        response << "Content-Type: " << "text/html" << "\r\n";
+        response << "Content-Length: " << body.size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << body;
+        return response.str();
+    }
     else if(succes_code == 404 && mode == "nofound")
     {
         std::stringstream ss;
@@ -1080,16 +1115,16 @@ std::string Request::create_response_html(int succes_code, std::string mode) {
         response << body;
         return response.str();
     }
-    else if(succes_code == 400 && mode == "badreq")
+    else if(succes_code == 415 && mode == "umt")
     {
         std::stringstream ss;
         std::string body;
-        std::ifstream file("www/codes_pages/400.html", std::ios::binary);
+        std::ifstream file("www/codes_pages/415.html", std::ios::binary);
         if (!file.is_open())
             return create_response_html(500, "ise");
         ss << file.rdbuf();
         body = ss.str();
-        response << "HTTP/1.1 400 Bad Request\r\n";
+        response << "HTTP/1.1 415 Unsupported Media Type\r\n";
         response << "Content-Type: " << "text/html" << "\r\n";
         response << "Content-Length: " << body.size() << "\r\n";
         response << "Connection: keep-alive\r\n";
