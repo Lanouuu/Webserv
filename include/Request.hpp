@@ -66,4 +66,5 @@ class Request {
         std::string convert_to_string();
 
         std::string create_response(int succes_code, Server const & server);
+        std::string get_file_type(const std::string& path);
 };

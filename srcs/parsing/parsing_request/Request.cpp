@@ -345,6 +345,63 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::cout << "error in parse_body_form" << std::endl;
                 return 400;
             }
+            if(_url == "/delete")
+            {
+                const char keyword[] = {"file_to_delete="};
+                const char end[] = {'&'};
+                std::vector<char>::iterator begin_file_name = std::search(_body.begin(), _body.end(), keyword, keyword + sizeof(keyword) - 1);
+                std::vector<char>::iterator end_file_name = std::search(_body.begin(), _body.end(), end, end + sizeof(end));
+                
+                std::string filename_to_delete;
+                filename_to_delete.assign(begin_file_name + sizeof(keyword) - 1, end_file_name);
+                
+                std::cout << "file to delete = " << filename_to_delete << std::endl;
+                std::ifstream file(("./upload/" + filename_to_delete).c_str());
+                if(file.is_open())
+                {
+                    std::remove(("./upload/" + filename_to_delete).c_str());
+                    if (std::ifstream(("./upload/" + filename_to_delete).c_str()))
+                    {
+                        std::cout << "Error, file could no be deleted" << std::endl;
+                        std::string response;
+                        response = create_response(403, server); // pas teste encore, surement une page 403.html a faire
+                        send(client.getClientFd(), response.c_str(), response.length(), 0);
+                        close(client.getClientFd());
+                        return 1;
+                    }
+                    std::ostringstream response;
+                    std::ifstream file("./www/codes_pages/delete_success.html", std::ios::binary);
+                    if (!file.is_open())
+                    {
+                        response << "HTTP/1.1 500 Internal Server Error\r\n\r\n";
+                        return 1;
+                    }
+                    std::stringstream ss;
+                    ss << file.rdbuf();
+                    std::string body = ss.str();
+                    
+                    response << "HTTP/1.1 200 OK\r\n";
+                    response << "Content-Type: text/html" << "\r\n";
+                    response << "Content-Length: " << body.size() << "\r\n";
+                    response << "Connection: keep-alive\r\n";
+                    response << "\r\n";
+                    response << ss.str();
+
+                    std::string res = response.str();
+                    send(client.getClientFd(), res.c_str(), res.length(), 0);
+                    close(client.getClientFd());
+                    return 0;
+                }
+                else
+                {
+                    std::string response;
+                    response = create_response(404, server);
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                
+            }
             std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
             std::ofstream new_file;
             std::string filename = _body_data.find("File+name")->second.c_str();
@@ -706,7 +763,7 @@ int Request::set_body()
     return 0;
 }
 
-std::string get_file_type(const std::string& path) {
+std::string Request::get_file_type(const std::string& path) {
     size_t dot = path.rfind('.');
     if (dot == std::string::npos) return "application/octet-stream";
     std::string ext = path.substr(dot + 1);
@@ -725,7 +782,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     struct stat s;
     std::string temp;
-    std::cout << "url = " << _url << std::endl;
+    // std::cout << "url = " << _url << std::endl;
     if (_url == "/")
         _url = "www/index.html";
     else if (_url == "/www/style.css")
@@ -759,7 +816,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         {
             if (_url[0] == '/')
                 _url.erase(0, 1);
-            std::cout << "stat url = " << _url << std::endl;
+            // std::cout << "stat url = " << _url << std::endl;
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -768,7 +825,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
                     if (_url[_url.size() - 1] != '/')
                         _url += '/';
                     temp = _url;
-                    std::cout << "_urlRoot = " << _url << std::endl;
+                    // std::cout << "_urlRoot = " << _url << std::endl;
                     _url = server.getRoot() + temp + server.getIndexes().front();
                 }
                 else if( s.st_mode & S_IFREG )
@@ -782,13 +839,25 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     if (_url[0] == '/')
         _url.erase(0, 1);
-    std::cout << "url after = " << _url << std::endl;
+    // std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
-    if (!file)
-        std::cout << "FIle not found" << std::endl;
     std::cout << "File = " << _url << std::endl;
     std::ostringstream ss;
     std::string body;
+    if (!file)
+    {
+        std::cout << "File not found" << std::endl;
+        std::ifstream error_file("www/codes_pages/404.html", std::ios::binary);
+        ss << error_file.rdbuf();
+        body = ss.str();
+        response << "HTTP/1.1 404 Not Found\r\n";
+        response << "Content-Type: " << "text/html" << "\r\n";
+        response << "Content-Length: " << body.size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << body;
+        return response.str();
+    }
     std::stringstream html;
     if (!file &&  s.st_mode & S_IFREG) {
         std::cout << "Could not find " << _url << std::endl;
@@ -929,15 +998,28 @@ std::string Request::create_response(int succes_code, Server const & server) {
             }
         }
         else if (succes_code == 201)
-        {           
+        {
+            std::ifstream file("./www/codes_pages/201.html", std::ios::binary | std::ios::ate);
+            if (!file.is_open())
+            {
+                response << "HTTP/1.1 500 Internal Server Error\r\n\r\n";
+                return response.str();
+            }
+            std::streamsize ssize = file.tellg();
+            file.seekg(0);
+            long size = static_cast<long>(ssize);
+            size += 27;
+
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            std::string body = ss.str();
+            
             response << "HTTP/1.1 201 Created\r\n";
-            response << _url << "\r\n";
             response << "Content-Type: " << get_file_type(_url) << "\r\n";
-            response << "Content-Length: " << "27" << "\r\n";
+            response << "Content-Length: " << body.size() << "\r\n";
             response << "Connection: keep-alive\r\n";
             response << "\r\n";
-            response << "File successfully created\r\n";
-            
+            response << ss.str();
         }
         else if (succes_code == 204)
             response << "HTTP/1.1 204 No Content\r\n";
