@@ -1,17 +1,22 @@
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-#include <cstring>
-#include <map>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <limits>
-#include <vector>
-#include <algorithm>
-#include "Server.hpp"
+#ifndef REQUEST_HPP
+# define REQUEST_HPP
+
+# include <iostream>
+# include <sstream>
+# include <fstream>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <unistd.h>
+# include <cstring>
+# include <map>
+# include <sys/stat.h>
+# include <fcntl.h>
+# include <limits>
+# include <vector>
+# include <algorithm>
+# include "Server.hpp"
+# include <dirent.h>
+# include "cgi.h"
 
 class Client;
 
@@ -69,3 +74,5 @@ class Request {
         std::string create_response_html(int succes_code, std::string mode);
         std::string get_file_type(const std::string& path);
 };
+
+#endif

@@ -34,6 +34,8 @@ SOURCES_SERVER	=	server/launch_servers.cpp \
 						server/print_servers.cpp \
 
 SOURCES_CLIENT	=	client/Client.cpp \
+
+SOURCES_CGI		=	cgi/exec_cgi.cpp \
 	
 # **************************************************************************** #
 #                                                                              #
@@ -47,6 +49,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_PARSING:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CLIENT:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CGI:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -63,6 +66,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
 					${INC_PATH}Request.hpp \
+					${INC_PATH}cgi.h \
 
 # **************************************************************************** #
 #                                                                              #
