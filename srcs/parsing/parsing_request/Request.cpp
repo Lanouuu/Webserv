@@ -840,7 +840,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << html.str();
     }
     else if(get_file_type(_url) == "script")
-        execCgi(server, response, _url);
+        execCgi(server.getCgi(), response, _url);
     else
     {
         std::cout << "File found " << _url << std::endl;

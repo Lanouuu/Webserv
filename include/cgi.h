@@ -7,6 +7,6 @@
 # include <sys/wait.h>
 # include "Server.hpp"
 
-void execCgi(Server const & server, std::ostringstream & response, std::string & url);
+void execCgi(const cgi_map & cgi, std::ostringstream & response, std::string & url);
 
 #endif

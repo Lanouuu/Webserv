@@ -1,21 +1,35 @@
 #include "cgi.h"
 
-static void childRoutine(Server const & server, int pipefd[2], std::string & _url)
+static std::string    getExtension(std::string & _url)
+{
+    std::string file_name;
+    std::string::size_type pos = _url.find_last_of('/');
+    file_name = (pos == std::string::npos) ? _url : _url.substr(pos + 1);
+    std::string extension = file_name.substr(file_name.find('.'));
+    return (extension);
+}
+
+static std::string  getBin(const cgi_map & cgi, std::string & extension)
+{
+    std::string bin;
+    for (cgi_map::const_iterator it = cgi.begin(); it != cgi.end(); it++)
+    {
+        if ((*it).first == extension)
+        {
+            bin = (*it).second;
+            break ;
+        }
+    }
+    return (bin);
+}
+
+static void childRoutine(const cgi_map & cgi, int pipefd[2], std::string & _url)
 {
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[0]);
     close(pipefd[1]);
-    std::string file_name;
-    std::string::size_type pos = _url.find_last_of('/');
-    if(pos == std::string::npos)    
-        file_name = _url.substr(pos + 1);
-    else
-        file_name = _url;
-    char *argv[] = {
-        (char *)file_name.c_str(),
-        NULL
-    };
-    // ===> Variables d'environnement CGI
+    std::string extension = getExtension(_url);
+    std::string bin = getBin(cgi, extension);
     char *envp[] = {
         (char *)"REQUEST_METHOD=GET",
         (char *)"GATEWAY_INTERFACE=CGI/1.1",
@@ -24,14 +38,30 @@ static void childRoutine(Server const & server, int pipefd[2], std::string & _ur
         // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
         NULL
     };
-    // std::cout << "url avant exec : " << _url.c_str() << std::endl;
-    execve(_url.c_str(), argv, envp);
+    char *argv[] = {
+        (char *)bin.c_str(),
+        (char *)_url.c_str(),
+        NULL
+    };
+    execve(bin.c_str(), argv, envp);
     std::cerr << "Webserv: execve: " << strerror(errno);
     exit(1);
 }
 
+static void parentRoutine(int pipefd[2], std::ostringstream & response)
+{
+    close(pipefd[1]);
+    char buffer[4096];
+    ssize_t count;
+    wait(NULL);
+    while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
+        response.write(buffer, count);
+    close(pipefd[0]);
+    return ;
+}
 
-void execCgi(Server const & server, std::ostringstream & response, std::string & _url)
+
+void execCgi(const cgi_map & cgi, std::ostringstream & response, std::string & _url)
 {
     int pipefd[2];
     if (pipe(pipefd) == -1)
@@ -47,21 +77,8 @@ void execCgi(Server const & server, std::ostringstream & response, std::string &
         return;
     }
     if(pid == 0)
-        childRoutine(server, pipefd, _url);
+        childRoutine(cgi, pipefd, _url);
     else
-    {
-        std::cout << "in parent" << std::endl;
-        close(pipefd[1]);
-        char buffer[4096];
-        ssize_t count;
-        wait(NULL);
-        while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
-        {
-            // write(client_fd, buffer, count);
-            response << buffer;
-            // std::cout << "response in sh : " << response.str() << std::endl;
-        }    
-        close(pipefd[0]);
-    }
+        parentRoutine(pipefd, response);
     return ;
 }
