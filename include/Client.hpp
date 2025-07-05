@@ -16,7 +16,7 @@ class   Client
         void        setFd(const int & fd);
         void        setUid(std::string const & uid);
 
-        int &       getClientFd(void);
+        int const &       getClientFd(void) const;
         std::string const & getUid(void);
         Request &   getRequest(void);
 

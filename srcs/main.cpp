@@ -57,9 +57,9 @@ int main(int ac, char **av, char **env)
                     {
                         memset(&buf, 0, 255);
                         readed = recv(temp.getClientFd(), buf, 255, 0);
-                        std::cout << "readed = " << readed << std::endl;
+                        // std::cout << "readed = " << readed << std::endl;
                         temp.getRequest().add_request(buf, sizeof(buf));
-                        std::cout << buf << std::endl;
+                        std::cout << buf << std::flush;
                     }
                     for(;index < servers.size(); index++)
                     {

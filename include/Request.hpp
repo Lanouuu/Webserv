@@ -59,16 +59,22 @@ class Request {
         int check_request_format_get(std::string const &req);
         int check_request_format_post();
         int check_request_format_post_multi();
-        int post_request_handler(int & success_code);
-        int delete_request_handler(int & success_code);
+        int get_request_handler(int & success_code, Client const & client, Server const & server);
+        int post_request_handler(int & success_code, Client const & client, Server const & server);
+        int delete_request_handler(int & success_code, Client const & client, Server const & server);
         int get_request_type(std::string const & method) const;
         int parse_body_form();
         void    add_request(char buffer[], size_t size);
         void    decode_content();
-        int urlencoded_handler();
-        int textPlain_Handler();
-        int multipart_formData_handler();
+        int urlencoded_handler(Client const & client, Server const & server);
+        int textPlain_Handler(Client const & client, Server const & server);
+        int multipart_formData_handler(Client const & client, Server const & server);
+        int getEOF_Pos();
+        int delete_file(Client const & client, Server const & server);
+        int request_error(Client const & client, int const error_code, std::string const mode);
         std::string convert_to_string();
 
         std::string create_response(int succes_code, Server const & server);
+        std::string create_response_html(int succes_code, std::string mode);
+        std::string get_file_type(const std::string& path);
 };

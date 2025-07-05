@@ -34,7 +34,7 @@ Client &    Client::operator=(const Client & rhs)
 /*                           Getters / Setters                              */
 /****************************************************************************/
 
-int  &      Client::getClientFd(void)
+int  const &      Client::getClientFd(void) const
 {
     return _clientFd;
 }
