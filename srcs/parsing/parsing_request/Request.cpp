@@ -861,6 +861,7 @@ std::string Request::get_file_type(const std::string& path) {
     if (ext == "ico") return "image/x-icon";
     if (ext == "txt") return "text/plain";
     if (ext == "sh") return "script";
+    if (ext == "py") return "script";
     return "application/octet-stream";
 }
 
