@@ -116,7 +116,7 @@ void execCgi(const cgi_map & cgi, std::ostringstream & response, const std::stri
     if (cgi.empty())
     {
         succes_code = 500;
-        std::cerr << RED << "Webserv: execve: " << END << "No rules for cgi" << std::endl;
+        std::cerr << RED << "Webserv: " << END << "No rules for cgi" << std::endl;
         return ;
     }
     int pipefd[2];
