@@ -3,6 +3,8 @@
 
 #include "Request.hpp"
 
+class Request;
+
 class   Client
 {
     public:
@@ -22,9 +24,9 @@ class   Client
 
     private:
 
-        int _clientFd;
+        int         _clientFd;
         std::string _uid;
-        Request _request;
+        Request     _request;
 
 
 };
