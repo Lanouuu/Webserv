@@ -1,8 +1,15 @@
 #include "Request.hpp"
 #include "Client.hpp"
 
-Request::Request() {
+Request::Request(void) : _reqLocation(NULL)
+{
+    return ;
+}
 
+Request::~Request(void)
+{
+    delete _reqLocation;
+    return ;
 }
 
 std::string Request::get_methode() {
@@ -282,6 +289,22 @@ std::string Request::convert_to_string() {
     return res;
 }
 
+void Request::findLocation(const Server & server, const std::string url)
+{
+    location_map temp = server.getLocaMap();
+
+    for (location_map::const_iterator it = temp.begin(); it != temp.end(); it++)
+    {
+        size_t pos = url.find((*it).first);
+        if (pos == 0)
+        {
+            _reqLocation = new Location((*it).second);
+            break ;
+        }
+    }
+    return ;
+}
+
 int Request::parse_request(Client & client, Server const & server) {
     std::string line;
     std::string word;
@@ -349,22 +372,23 @@ int Request::parse_request(Client & client, Server const & server) {
     if(_methode == "POST")
     {
 
-        // => CGI PYTHON POST
-        std::ostringstream temp;
-        execCgi(server.getCgi(), temp, _url, succes_code, _methode);
-        if (succes_code == 404 || succes_code == 500)
-        {
-            if (succes_code == 404)
-                response = create_response_html(404, "nofound");
-            else if (succes_code == 500)
-                response = create_response_html(500, "ise");
-            send(client.getClientFd(), response.c_str(), response.length(), 0);
-            close(client.getClientFd());
-            return 1;
-        }
-        response = temp.str();
-        send(client.getClientFd(), response.c_str(), response.length(), 0);
-        return (0);
+        // => CGI PYTHON POST, laisser commenter pour l'instant mais ne PAS supprimer !!
+
+        // std::ostringstream temp;
+        // execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+        // if (succes_code == 404 || succes_code == 500)
+        // {
+        //     if (succes_code == 404)
+        //         response = create_response_html(404, "nofound");
+        //     else if (succes_code == 500)
+        //         response = create_response_html(500, "ise");
+        //     send(client.getClientFd(), response.c_str(), response.length(), 0);
+        //     close(client.getClientFd());
+        //     return 1;
+        // }
+        // response = temp.str();
+        // send(client.getClientFd(), response.c_str(), response.length(), 0);
+        // return (0);
 
         // => FIN CGI PYTHON POST
 
