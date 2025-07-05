@@ -2,8 +2,15 @@
 #include <sys/wait.h>
 #include <dirent.h>
 
-Request::Request() {
+Request::Request(void) : _reqLocation(NULL)
+{
+    return ;
+}
 
+Request::~Request(void)
+{
+    delete _reqLocation;
+    return ;
 }
 
 std::string Request::get_methode() {
@@ -283,6 +290,22 @@ std::string Request::convert_to_string() {
     return res;
 }
 
+void Request::findLocation(const Server & server, const std::string url)
+{
+    location_map temp = server.getLocaMap();
+
+    for (location_map::const_iterator it = temp.begin(); it != temp.end(); it++)
+    {
+        size_t pos = url.find((*it).first);
+        if (pos == 0)
+        {
+            _reqLocation = new Location((*it).second);
+            break ;
+        }
+    }
+    return ;
+}
+
 int Request::parse_request(Client & client, Server const & server) {
     std::string line;
     std::string word;
@@ -349,6 +372,27 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     if(_methode == "POST")
     {
+
+        // => CGI PYTHON POST, laisser commenter pour l'instant mais ne PAS supprimer !!
+
+        // std::ostringstream temp;
+        // execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+        // if (succes_code == 404 || succes_code == 500)
+        // {
+        //     if (succes_code == 404)
+        //         response = create_response_html(404, "nofound");
+        //     else if (succes_code == 500)
+        //         response = create_response_html(500, "ise");
+        //     send(client.getClientFd(), response.c_str(), response.length(), 0);
+        //     close(client.getClientFd());
+        //     return 1;
+        // }
+        // response = temp.str();
+        // send(client.getClientFd(), response.c_str(), response.length(), 0);
+        // return (0);
+
+        // => FIN CGI PYTHON POST
+
         if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
             return 1;
         for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
@@ -824,6 +868,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     struct stat s;
     std::string temp;
+    cgi_map     cgi_temp = server.getCgi();
     // std::cout << "url = " << _url << std::endl;
     if (_url == "/")
         _url = "www/index.html";
@@ -840,6 +885,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         if (it != locations.end())
         {
             std::cout << "location trouver" << std::endl;
+            cgi_temp = (*it).second.getCgi();
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -929,66 +975,9 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     else if(get_file_type(_url) == "script")
     {
-        int pipefd[2];
-        if (pipe(pipefd) == -1)
-        {
-            response << "error";
-            return response.str();
-        }
-
-        pid_t pid;
-        pid = fork();
-        if(pid < 0)
-        {
-            response << "error";
-            return response.str();  
-        }
-        if(pid == 0)
-        {
-            dup2(pipefd[1], STDOUT_FILENO);
-            close(pipefd[0]);
-            close(pipefd[1]);
-            std::string file_name;
-            std::string::size_type pos = _url.find_last_of('/');
-            if(pos == std::string::npos)    
-                file_name = _url.substr(pos + 1);
-            else
-                file_name = _url;
-            char *argv[] = {
-                (char *)file_name.c_str(),
-                NULL
-            };
-
-            // ===> Variables d'environnement CGI
-            char *envp[] = {
-                (char *)"REQUEST_METHOD=GET",
-                (char *)"GATEWAY_INTERFACE=CGI/1.1",
-                (char *)"SERVER_PROTOCOL=HTTP/1.1",
-                // (char *)"CONTENT_LENGTH=0",
-                // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
-                NULL
-            };
-            // std::cout << "url avant exec : " << _url.c_str() << std::endl;
-            execve(_url.c_str(), argv, envp);
-            perror("execve");
-            exit(1);
-        }
-        else
-        {
-            std::cout << "in parent" << std::endl;
-            close(pipefd[1]);
-            char buffer[4096];
-            ssize_t count;
-            wait(NULL);
-            while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
-            {
-                // write(client_fd, buffer, count);
-                response << buffer;
-                // std::cout << "response in sh : " << response.str() << std::endl;
-            }    
-            close(pipefd[0]);
-            return response.str();
-        }
+        execCgi(cgi_temp, response, _url, succes_code, _methode);
+        if (succes_code == 500)
+            return (create_response_html(succes_code, "ise"));
     }
     else
     {

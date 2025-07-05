@@ -1,6 +1,6 @@
 #include "cgi.h"
 
-static std::string    getExtension(std::string & _url)
+static std::string    getExtension(const std::string & _url)
 {
     std::string file_name;
     std::string::size_type pos = _url.find_last_of('/');
@@ -9,7 +9,7 @@ static std::string    getExtension(std::string & _url)
     return (extension);
 }
 
-static std::string  getBin(const cgi_map & cgi, std::string & extension)
+static std::string  getBin(const cgi_map & cgi, const std::string & extension)
 {
     std::string bin;
     for (cgi_map::const_iterator it = cgi.begin(); it != cgi.end(); it++)
@@ -23,62 +23,120 @@ static std::string  getBin(const cgi_map & cgi, std::string & extension)
     return (bin);
 }
 
-static void childRoutine(const cgi_map & cgi, int pipefd[2], std::string & _url)
+static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string & _url, const std::string & method)
 {
+    std::string extension = getExtension(_url);
+    std::string bin = getBin(cgi, extension);
     dup2(pipefd[1], STDOUT_FILENO);
     close(pipefd[0]);
     close(pipefd[1]);
-    std::string extension = getExtension(_url);
-    std::string bin = getBin(cgi, extension);
-    char *envp[] = {
-        (char *)"REQUEST_METHOD=GET",
-        (char *)"GATEWAY_INTERFACE=CGI/1.1",
-        (char *)"SERVER_PROTOCOL=HTTP/1.1",
-        // (char *)"CONTENT_LENGTH=0",
-        // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
-        NULL
-    };
+    std::string final_url;
+    if (method == "POST")
+        final_url = "." +_url;
+    else
+        final_url = _url;
     char *argv[] = {
         (char *)bin.c_str(),
-        (char *)_url.c_str(),
+        (char *)final_url.c_str(),
         NULL
     };
-    execve(bin.c_str(), argv, envp);
-    std::cerr << "Webserv: execve: " << strerror(errno);
+    char *envget[] = {
+        (char *)("REQUEST_METHOD=GET"),
+        (char *)("GATEWAY_INTERFACE=CGI/1.1"),
+        (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+    };
+    char *envpost[] = {
+        (char *)("REQUEST_METHOD=POST"),
+        (char *)("GATEWAY_INTERFACE=CGI/1.1"),
+        (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+    };
+    std::cerr << "url = " << argv[1] << std::endl;
+    std::cerr << "bin = " << argv[0] << std::endl;
+    if (method == "GET")
+        execve(bin.c_str(), argv, envget);
+    else if (method == "POST")
+        execve(bin.c_str(), argv, envpost);
+    std::cerr << RED << "Webserv: execve: " << END << strerror(errno) << std::endl;
     exit(1);
 }
 
-static void parentRoutine(int pipefd[2], std::ostringstream & response)
+static void parentRoutine(int pipefd[2], std::ostringstream & response, int & succes_code, const std::string & method)
 {
     close(pipefd[1]);
     char buffer[4096];
     ssize_t count;
-    wait(NULL);
-    while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
-        response.write(buffer, count);
-    close(pipefd[0]);
+    int status;
+    int exit_code = 0;
+    wait(&status);
+    if (WIFEXITED(status))
+        exit_code = WEXITSTATUS(status);
+    if (exit_code == 1)
+    {
+        close(pipefd[0]);
+        succes_code = 500;
+        return ;
+    }
+    if (method == "POST")
+    {
+        std::string cgi_output;
+        while ((count = read(pipefd[0], buffer, sizeof(buffer))) > 0)
+            cgi_output.append(buffer, count);
+        close(pipefd[0]);
+        if (cgi_output.find("404 Not Found") != std::string::npos)
+        {
+            succes_code = 404;
+            return ;
+        }
+        std::string::size_type header_end = cgi_output.find("\r\n\r\n");
+        if (header_end == std::string::npos)
+            header_end = cgi_output.find("\n\n");
+        if (header_end != std::string::npos) 
+        {
+            std::string headers = cgi_output.substr(0, header_end);
+            std::string body = cgi_output.substr(header_end + 4);
+            response << "HTTP/1.1 200 OK\r\n";
+            response << headers << "\r\n\r\n";
+            response << body;
+        } 
+        else 
+            response << cgi_output;
+    }
+    else if (method == "GET")
+    {
+        while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
+            response.write(buffer, count);
+        close(pipefd[0]);
+    }
     return ;
 }
 
 
-void execCgi(const cgi_map & cgi, std::ostringstream & response, std::string & _url)
+void execCgi(const cgi_map & cgi, std::ostringstream & response, const std::string & _url, int & succes_code, const std::string & method)
 {
+    if (cgi.empty())
+    {
+        succes_code = 500;
+        std::cerr << RED << "Webserv: " << END << "No rules for cgi" << std::endl;
+        return ;
+    }
     int pipefd[2];
     if (pipe(pipefd) == -1)
     {
-        response << "error";
-        return;
+        succes_code = 500;
+        std::cerr << RED << "Webserv: pipe: " << END << strerror(errno) << std::endl;
+        return ;
     }
     pid_t pid;
     pid = fork();
     if(pid < 0)
     {
-        response << "error";
-        return;
+        succes_code = 500;
+        std::cerr << RED << "Webserv: fork: " << END << strerror(errno) << std::endl;
+        return ;
     }
     if(pid == 0)
-        childRoutine(cgi, pipefd, _url);
+        childRoutine(cgi, pipefd, _url, method);
     else
-        parentRoutine(pipefd, response);
+        parentRoutine(pipefd, response, succes_code, method);
     return ;
 }
