@@ -711,7 +711,6 @@ int Request::set_methode(std::string const & line)
     
         else if (*it == '\r')
         {
-            // std::cout << "read : " << read << std::endl;
             if(read == "HTTP/1.1") 
                 _http_version = read;
             else
