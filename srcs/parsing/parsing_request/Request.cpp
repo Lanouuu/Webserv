@@ -4,8 +4,15 @@
 #include <dirent.h>
 #include <iterator>
 
-Request::Request() {
+Request::Request(void) : _reqLocation(NULL)
+{
+    return ;
+}
 
+Request::~Request(void)
+{
+    delete _reqLocation;
+    return ;
 }
 
 std::string Request::get_methode() {
@@ -306,6 +313,22 @@ std::string Request::convert_to_string() {
     return res;
 }
 
+void Request::findLocation(const Server & server, const std::string url)
+{
+    location_map temp = server.getLocaMap();
+
+    for (location_map::const_iterator it = temp.begin(); it != temp.end(); it++)
+    {
+        size_t pos = url.find((*it).first);
+        if (pos == 0)
+        {
+            _reqLocation = new Location((*it).second);
+            break ;
+        }
+    }
+    return ;
+}
+
 int Request::parse_request(Client & client, Server const & server) {
     std::string line;
     std::string word;
@@ -373,6 +396,27 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     if(_methode == "POST")
     {
+
+        // => CGI PYTHON POST, laisser commenter pour l'instant mais ne PAS supprimer !!
+
+        // std::ostringstream temp;
+        // execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+        // if (succes_code == 404 || succes_code == 500)
+        // {
+        //     if (succes_code == 404)
+        //         response = create_response_html(404, "nofound");
+        //     else if (succes_code == 500)
+        //         response = create_response_html(500, "ise");
+        //     send(client.getClientFd(), response.c_str(), response.length(), 0);
+        //     close(client.getClientFd());
+        //     return 1;
+        // }
+        // response = temp.str();
+        // send(client.getClientFd(), response.c_str(), response.length(), 0);
+        // return (0);
+
+        // => FIN CGI PYTHON POST
+
         if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
             return 1;
         for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
@@ -844,6 +888,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     struct stat s;
     std::string temp;
+    cgi_map     cgi_temp = server.getCgi();
     // std::cout << "url = " << _url << std::endl;
     if (_url == "/")
         _url = "www/index.html";
@@ -860,6 +905,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         if (it != locations.end())
         {
             std::cout << "location trouver" << std::endl;
+            cgi_temp = (*it).second.getCgi();
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -948,7 +994,11 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << html.str();
     }
     else if(get_file_type(_url) == "script")
-        execCgi(server.getCgi(), response, _url);
+    {
+        execCgi(cgi_temp, response, _url, succes_code, _methode);
+        if (succes_code == 500)
+            return (create_response_html(succes_code, "ise"));
+    }
     else
     {
         std::cout << "File found " << _url << std::endl;
