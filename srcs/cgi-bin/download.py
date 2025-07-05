@@ -1,18 +1,8 @@
-import cgi
 import os
 import sys
 
 def main():
 
-    if os.environ.get("REQUEST_METHOD", "") == "POST":
-        try:
-            content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-            if content_length > 0:
-                post_data = sys.stdin.read(content_length)
-            else:
-                post_data = ""
-        except Exception:
-            pass
     filepath = "./Makefile"
     if not os.path.isfile(filepath):
         print("Status: 404 Not Found")
