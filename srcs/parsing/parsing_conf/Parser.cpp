@@ -323,7 +323,7 @@ std::string Parser::parseIP(std::string value)
         if (buf.empty())
             throw std::invalid_argument(tokenErr("invalid IP address", *_current));
         test = strtol(buf.c_str(), NULL, 10);
-        if (errno == ERANGE | test < 0 | test > 255)
+        if ((errno == ERANGE) | (test < 0) | (test > 255))
             throw std::invalid_argument(tokenErr("invalid IP address", *_current));
         temp.erase(0, pos + 1);
         i++;
