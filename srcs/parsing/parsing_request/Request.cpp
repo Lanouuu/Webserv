@@ -45,7 +45,6 @@ int Request::check_request_format_get(std::string const &req) {
 int Request::getEOF_Pos()
 {
     int i =  _request.end() - _request.begin();
-    std::cout << "I = " << i << std::endl;
     for (std::vector<char>::const_iterator it = _request.end(); it != _request.begin(); it--)
     {
         if (*it == '\n')
@@ -59,38 +58,25 @@ int Request::getEOF_Pos()
 int Request::check_request_format_post() {
     int end_found = 0;
     int end = getEOF_Pos();
-    std::cout << "req end = " << static_cast<int>(_request[end]) << std::endl;
     if(_request[end] != '\n' || _request[end - 1] != '\r')
-    {
         return 1;
-    }
     for(std::vector<char>::const_iterator it = _request.end() - 2; it != _request.begin(); it--)
     {
         if(*it == '\n' && *(it - 1) != '\r' )
-        {
             return 1;
-        }
         if(*it == '\r' && *it == _request[0])
-        {
             return 1;
-        }
         if(*it == '\r' && *(it - 1) == '\n' && *(it - 2) == '\r' && *(it + 1) == '\n')
         {
             ++end_found;
             if(end_found != 1)
-            {
                 return 1;
-            }
         }
         else if(*it == '\r' && *(it - 1) && isalnum(*(it - 1)) == 0 && *(it - 1) != '\n' && end_found == 1)
-        {
             return 1;
-        }
     }
     if(end_found != 1)
-    {
         return 1;
-    }
     std::cout << "format post xform ok" << std::endl;
     return 0;
 }
@@ -98,37 +84,26 @@ int Request::check_request_format_post() {
 int Request::check_request_format_post_multi() {
     int end_found = 0;
     int end = getEOF_Pos();
-    std::cout << "req end = " << static_cast<int>(_request[end]) << std::endl;
     if(_request[end] != '\n' || _request[end - 1] != '\r')
-    {
         return 1;
-    }
     for(std::vector<char>::const_iterator it = _request.begin(); it != _request.end(); it++)
     {
         if(*it == '\r' && *(it + 1) != '\n' )
-        {
             return 1;
-        }
         if(isalnum(*it) == 0 && *it == _request[0])
-        {
             return 1;
-        }
         if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
         {
             ++end_found;
            for (std::vector<char>::const_iterator it2 = it + 4; it2 != _request.end(); it2++)
            {
                 if ((*it2 == '\r' && *(it2 + 1) != '\n') || (*it2 == '\n' && *(it2 - 1) != '\r'))
-                {
                     return 1;
-                }
            }
             break;
         }
         else if(*it == '\r' && *(it + 1) && isalnum(*(it + 1)) == 0 && *(it + 1) != '\n' && end_found == 0)
-        {
             return 1;
-        }
     }
     std::cout << "format post multi ok" << std::endl;
     return 0;
@@ -308,14 +283,12 @@ int Request::set_methode(std::string const & line)
             read.clear();
             it++;
         }
-    
         else if(*it == ' ' && _url.empty() )
         {
             _url = read;
             read.clear();
             it++;
         }
-    
         else if (*it == '\r')
         {
             // std::cout << "read : " << read << std::endl;
@@ -333,13 +306,9 @@ int Request::set_methode(std::string const & line)
 void    Request::add_request(char buffer[], size_t size)
 {
     for (size_t i = 0; i < size; i++)
-    {
         _request.push_back(buffer[i]);
-    }
     // for(size_t i = 0; i < size; i++)
-    // {
     //     std::cout << _request[i];
-    // }
     // std::cout << std::endl;
 }
 
@@ -399,15 +368,9 @@ std::string Request::create_response(int succes_code, Server const & server) {
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
-                {
-                    // it's a directory
                     _url = it->second.getUrl() + it->second.getIndexes().front();
-                }
                 else if( s.st_mode & S_IFREG )
-                {
-                    // it's a file
                     _url = it->second.getUrl();
-                }
             }
         }
         else
@@ -418,7 +381,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
             {
                 if( s.st_mode & S_IFDIR )
                 {
-                    // it's a directory
                     if (_url[_url.size() - 1] != '/')
                         _url += '/';
                     temp = _url;
@@ -426,7 +388,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
                 }
                 else if( s.st_mode & S_IFREG )
                 {
-                    // it's a file
                     temp = _url;
                     _url = server.getRoot() + temp;
                 }
@@ -1113,6 +1074,11 @@ std::string Request::get_host() {
 }
 
 std::vector<char> & Request::getRequest()
+{
+    return _request;
+}
+
+std::vector<char> const & Request::getRequest() const
 {
     return _request;
 }

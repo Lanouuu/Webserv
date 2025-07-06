@@ -45,6 +45,7 @@ class Request {
         std::string get_content_type();
         std::string get_content_length();
         std::vector<char> & getRequest();
+        std::vector<char> const & getRequest() const;
 
         int set_methode(std::string const & line);
         int set_accept(std::string const & line);
