@@ -94,15 +94,17 @@ int Request::check_request_format_get(std::string const &req) {
     return 0;
 }
 
-int Request::getEOF_Pos()
-{
-    int i =  _request.end() - _request.begin();
+int Request::getEOF_Pos() {
+    int i = _request.size();
     std::cout << "I = " << i << std::endl;
-    for (std::vector<char>::const_iterator it = _request.end(); it != _request.begin(); it--)
-    {
-        if (*it == '\n')
+
+    std::vector<char>::const_iterator it = _request.end();
+    while (it != _request.begin()) {
+        --it;
+        --i;
+        if (*it == '\n') {
             break;
-        i--;
+        }
     }
     return i;
 }
@@ -152,6 +154,7 @@ int Request::check_request_format_post() {
 int Request::check_request_format_post_multi() {
     int end_found = 0;
     unsigned long end = getEOF_Pos();
+    std::cout << "---------------------------- end = " << end << "--------------------------\n";
     if (end == 0 || end >= _request.size()) {
         std::cout << "error: end out of bounds\n";
         return 1;
@@ -186,8 +189,7 @@ int Request::check_request_format_post_multi() {
                 if (next2 == _request.end())
                     break;
 
-                if ((*it2 == '\r' && *next2 != '\n') ||
-                    (*it2 == '\n' && *(it2 - 1) != '\r'))
+                if ((*it2 == '\r' && *next2 != '\n'))
                 {
                     std::cout << "error ici 3\n";
                     return 1;
