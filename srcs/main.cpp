@@ -33,6 +33,7 @@ int main(int ac, char **av, char **env)
                     Client temp;
                     if (isServerSocket(socket_fd, servers))
                     {
+                        std::cout << "Server socket =  " << socket_fd << std::endl;
                         struct sockaddr_in clientInfo;
                         socklen_t size = sizeof(clientInfo);
                         int clientSocket = accept(socket_fd, (struct sockaddr *)&clientInfo, &size);
@@ -44,14 +45,20 @@ int main(int ac, char **av, char **env)
                     }
                     else
                     {
-                        char buf[255] = {0};
+                        std::cout << "Client socket =  " << socket_fd << std::endl;
+                        char buf[4098] = {0};
                         int readed = 0;
-                        memset(&buf, 0, 255);
+                        memset(&buf, 0, 4098);
                         // std::cout << "ici" << std::endl;
-                        readed = recv(clients[socket_fd].getClientFd(), buf, 255, 0);
+                        readed = recv(clients[socket_fd].getClientFd(), buf, 4098, 0);
                         // std::cout << "ici2" << std::endl;
                         if (readed <= 0)
+                        {
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, NULL);
+                            close(socket_fd);
+                            clients.erase(socket_fd);
                             continue;
+                        }
                         // std::cout << "readed = " << readed << std::endl;
                         clients[socket_fd].getRequest().add_request(buf, sizeof(buf));
                         std::cout << buf << std::flush;

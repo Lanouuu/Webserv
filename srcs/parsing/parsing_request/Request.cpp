@@ -229,12 +229,21 @@ int Request::parse_request(Client & client, Server const & server) {
                 {
                     if (word == methods[i])
                     {
+                        std::cout << "Line = " << line << std::endl;
                         if ((this->*funct[i])(line) == 1)
+                        {
+                            std::cout << "i = " << i << std::endl;
+                            std::cout << "HEREHEREHERE1" << std::endl;
                             return request_error(client, 400, "badreq");
+                        }
                         break ;
                     }
                     else if(i == sizeof(methods) / sizeof(methods[0]) && word != methods[sizeof(methods) / sizeof(methods[0])])
+                    {
+                        std::cout << "HEREHEREHERE2" << std::endl;
                         return request_error(client, 400, "badreq");
+                    }
+                            
                 }
                 word.clear();
                 break;
@@ -291,7 +300,7 @@ int Request::set_methode(std::string const & line)
         }
         else if (*it == '\r')
         {
-            // std::cout << "read : " << read << std::endl;
+            std::cout << "read : " << read << std::endl;
             if(read == "HTTP/1.1") 
                 _http_version = read;
             else
