@@ -50,8 +50,6 @@ static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string &
         (char *)("GATEWAY_INTERFACE=CGI/1.1"),
         (char *)("SERVER_PROTOCOL=HTTP/1.1"),
     };
-    std::cerr << "url = " << argv[1] << std::endl;
-    std::cerr << "bin = " << argv[0] << std::endl;
     if (method == "GET")
         execve(bin.c_str(), argv, envget);
     else if (method == "POST")
