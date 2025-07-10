@@ -351,12 +351,12 @@ int Request::parse_request(Client & client, Server const & server) {
                         break ;
                     }
                     else if(i == sizeof(methods) / sizeof(methods[0]) && word != methods[sizeof(methods) / sizeof(methods[0])])
-                        {
-                            response = create_response_html(400, "badreq");
-                            send(client.getClientFd(), response.c_str(), response.length(), 0);
-                            close(client.getClientFd());
-                            return 1;
-                        }
+                    {
+                        response = create_response_html(400, "badreq");
+                        send(client.getClientFd(), response.c_str(), response.length(), 0);
+                        close(client.getClientFd());
+                        return 1;
+                    }
                 }
                 word.clear();
                 break;
