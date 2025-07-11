@@ -48,11 +48,7 @@ int main(int ac, char **av, char **env)
                         char buf[4098] = {0};
                         int readed = 0;
                         memset(&buf, 0, 4098);
-                        memset(&buf, 0, 4098);
-                        // std::cout << "ici" << std::endl;
                         readed = recv(clients[socket_fd].getClientFd(), buf, 4098, 0);
-                        readed = recv(clients[socket_fd].getClientFd(), buf, 4098, 0);
-                        // std::cout << "ici2" << std::endl;
                         if (readed <= 0)
                         {
                             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, NULL);
