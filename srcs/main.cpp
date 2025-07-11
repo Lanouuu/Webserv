@@ -38,17 +38,17 @@ int main(int ac, char **av, char **env)
                         int clientSocket = accept(socket_fd, (struct sockaddr *)&clientInfo, &size);
                         temp.setFd(clientSocket);
                         temp.getClientEpollStruct().events = EPOLLIN;
-                        temp.getClientEpollStruct().data.fd = clientSocket; 
+                        temp.getClientEpollStruct().data.fd = clientSocket;
                         epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &temp.getClientEpollStruct());
                         addClient(clients, temp, clientSocket);
                     }
                     else
                     {
-                        char buf[255] = {0};
+                        char buf[4098] = {0};
                         int readed = 0;
-                        memset(&buf, 0, 255);
+                        memset(&buf, 0, 4098);
                         // std::cout << "ici" << std::endl;
-                        readed = recv(clients[socket_fd].getClientFd(), buf, 255, 0);
+                        readed = recv(clients[socket_fd].getClientFd(), buf, 4098, 0);
                         // std::cout << "ici2" << std::endl;
                         if (readed <= 0)
                             continue;
@@ -61,7 +61,11 @@ int main(int ac, char **av, char **env)
                         //         break ;
                         // }
                         if (clients[socket_fd].RequestIsComplete())
+                        {
                             clients[socket_fd].getRequest().parse_request(clients[socket_fd], servers[0]);
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp.getClientEpollStruct());
+                            clients.erase(socket_fd);
+                        }
                     }
                 }
             }

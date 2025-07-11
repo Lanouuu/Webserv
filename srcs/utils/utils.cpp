@@ -8,9 +8,9 @@ void    addClient(client_map & clients, Client const & client, int const & clien
     //     std::string key;
     //     ss << i;
     //     ss >> key;
-    //     client_map::const_iterator it = clients.find(key);
-    //     if (it != clients.end())
-    //         continue;
+        client_map::const_iterator it = clients.find(clientSocket);
+        if (it != clients.end())
+            return ;
         clients.insert(std::pair<int, Client>(clientSocket, client));
     //     clients[clientSocket].setUid(key);
     //     break ;
