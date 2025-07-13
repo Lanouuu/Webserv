@@ -34,31 +34,13 @@ int main(int ac, char **av, char **env)
                     if (isServerSocket(socket_fd, servers))
                     {
                         std::cout << "Server socket =  " << socket_fd << std::endl;
-                        struct sockaddr_in clientInfo;
-                        socklen_t size = sizeof(clientInfo);
-                        int clientSocket = accept(socket_fd, (struct sockaddr *)&clientInfo, &size);
-                        temp.setFd(clientSocket);
-                        temp.getClientEpollStruct().events = EPOLLIN;
-                        temp.getClientEpollStruct().data.fd = clientSocket;
-                        epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &temp.getClientEpollStruct());
-                        addClient(clients, temp, clientSocket);
+                        setClient(temp, socket_fd, epoll_fd);
+                        addClient(clients, temp);
                     }
                     else
                     {
-                        char buf[4098] = {0};
-                        int readed = 0;
-                        memset(&buf, 0, 4098);
-                        readed = recv(clients[socket_fd].getClientFd(), buf, 4098, 0);
-                        if (readed <= 0)
-                        {
-                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, NULL);
-                            close(socket_fd);
-                            clients.erase(socket_fd);
+                        if (read_request(clients, socket_fd, epoll_fd) == 0)
                             continue;
-                        }
-                        // std::cout << "readed = " << readed << std::endl;
-                        clients[socket_fd].getRequest().add_request(buf, sizeof(buf));
-                        std::cout << buf << std::flush;
                         // for(;index < servers.size(); index++)
                         // {
                         //     if (servers[index].getSocket() == socket_fd)
