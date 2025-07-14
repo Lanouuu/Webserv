@@ -292,17 +292,24 @@ std::string Request::convert_to_string() {
 
 void Request::findLocation(const Server & server, const std::string url)
 {
-    location_map temp = server.getLocaMap();
+    location_map    map_temp = server.getLocaMap();
+    Location        loca_temp;
+    std::string     uri_str;    
 
-    for (location_map::const_iterator it = temp.begin(); it != temp.end(); it++)
+    for (location_map::const_iterator it = map_temp.begin(); it != map_temp.end(); it++)
     {
         size_t pos = url.find((*it).first);
         if (pos == 0)
         {
-            _reqLocation = new Location((*it).second);
-            break ;
+            if ((*it).first.size() > uri_str.size())
+            {
+                loca_temp = (*it).second;
+                uri_str = (*it).first;
+            }
+            
         }
     }
+    _reqLocation = new Location(loca_temp);
     return ;
 }
 

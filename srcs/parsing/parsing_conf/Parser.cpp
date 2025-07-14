@@ -204,27 +204,9 @@ void    Parser::parseLocaDirective(Location & loca_temp)
         if (_current->type != String)
             throw std::invalid_argument(tokenErr("expected string value after directive", *_current));
         if (value == "alias")
-        {
-            if (_current->value[0] != '/')
-                throw std::invalid_argument(tokenErr("invalid uri for alias", *_current));
-            std::string alias = _current->value;
-            if (alias[alias.length() - 1] != '/')
-                alias.push_back('/');
-            loca_temp.setAlias(alias);
-            if (loca_temp.getIsDirectory())
-                loca_temp.setUrl("." + alias);
-            else
-                loca_temp.setUrl("." + alias + loca_temp.getBaseUri().substr(1));
-        }
+            parseAlias(loca_temp);
         else if (value == "autoindex")
-        {
-            if (_current->value == "on")
-                loca_temp.setAutoIndex(true);
-            else if (_current->value == "off")
-                loca_temp.setAutoIndex(false);
-            else
-                throw std::invalid_argument(tokenErr("invalid value for \"autoindex\" directive", *_current));
-        }
+            parseAutoIndex(loca_temp);
         else if (value == "max_body_size")
             loca_temp.setBodySize(parseBodySize(_current->value));
         advanceAndCheck();
@@ -248,19 +230,9 @@ void    Parser::parseLocaDirective(Location & loca_temp)
         while (_current->type == String)
         {
             if (value == "index")
-            {
-                if (loca_temp.getIsDirectory())
-                    loca_temp.addIndex(_current->value);
-                advanceAndCheck();
-            }
+                parseLocaIndex(loca_temp);
             else if (value == "set_method")
-            {
-                if (_current->value != "GET" && _current->value != "POST" && _current->value != "DELETE")
-                    throw std::invalid_argument(tokenErr("invalid method for \"set_method\" directive", *_current));
-                else
-                    loca_temp.addMethod(_current->value);
-                advanceAndCheck();
-            }
+                parseSetMethod(loca_temp);
             else if (value == "cgi")
                 parseCgi(loca_temp);
         }
@@ -432,6 +404,66 @@ size_t    Parser::parseBodySize(std::string & str_size)
     if (result > MAX_BODY_SIZE)
             throw std::overflow_error(tokenErr("max body size too large", *_current));
     return (result);
+}
+
+
+/*********Parsing Alias*********/
+
+
+void    Parser::parseAlias(Location & loca_temp)
+{
+    if (_current->value[0] != '/')
+        throw std::invalid_argument(tokenErr("invalid uri for alias", *_current));
+    std::string alias = _current->value;
+    if (alias[alias.length() - 1] != '/')
+        alias.push_back('/');
+    loca_temp.setAlias(alias);
+    if (loca_temp.getIsDirectory())
+        loca_temp.setUrl("." + alias);
+    else
+        loca_temp.setUrl("." + alias + loca_temp.getBaseUri().substr(1));
+    return ;
+}
+
+
+/*********Parsing AutoIndex*********/
+
+
+void    Parser::parseAutoIndex(Location&loca_temp)
+{
+    if (_current->value == "on")
+        loca_temp.setAutoIndex(true);
+    else if (_current->value == "off")
+        loca_temp.setAutoIndex(false);
+    else
+        throw std::invalid_argument(tokenErr("invalid value for \"autoindex\" directive", *_current));
+    return ;
+}
+
+
+/*********Parsing Set Method*********/
+
+
+void    Parser::parseSetMethod(Location & loca_temp)
+{
+    if (_current->value != "GET" && _current->value != "POST" && _current->value != "DELETE")
+        throw std::invalid_argument(tokenErr("invalid method for \"set_method\" directive", *_current));
+    else
+        loca_temp.addMethod(_current->value);
+    advanceAndCheck();
+    return ;
+}
+
+
+/*********Parsing Location Index*********/
+
+
+void    Parser::parseLocaIndex(Location & loca_temp)
+{
+    if (loca_temp.getIsDirectory())
+        loca_temp.addIndex(_current->value);
+    advanceAndCheck();
+    return ;
 }
 
 

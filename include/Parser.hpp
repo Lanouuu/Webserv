@@ -32,6 +32,10 @@ class   Parser : public Lexer
         std::string                         parseIP(std::string value);
         void                                parseErrorPage(Server & serv_temp);
         size_t                              parseBodySize(std::string & size);
+        void                                parseAlias(Location & loca_temp);
+        void                                parseAutoIndex(Location & loca_temp);
+        void                                parseSetMethod(Location & loca_temp);
+        void                                parseLocaIndex(Location & loca_temp);
         template<typename C>
         void                                parseCgi(C & target);
 
