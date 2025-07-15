@@ -100,15 +100,17 @@ int Request::check_request_format_get(std::string const &req) {
     return 0;
 }
 
-int Request::getEOF_Pos()
-{
-    int i =  _request.end() - _request.begin();
+int Request::getEOF_Pos() {
+    int i = _request.size();
     std::cout << "I = " << i << std::endl;
-    for (std::vector<char>::const_iterator it = _request.end(); it != _request.begin(); it--)
-    {
-        if (*it == '\n')
+
+    std::vector<char>::const_iterator it = _request.end();
+    while (it != _request.begin()) {
+        --it;
+        --i;
+        if (*it == '\n') {
             break;
-        i--;
+        }
     }
     return i;
 }
@@ -156,7 +158,12 @@ int Request::check_request_format_post() {
 
 int Request::check_request_format_post_multi() {
     int end_found = 0;
-    int end = getEOF_Pos();
+    unsigned long end = getEOF_Pos();
+    std::cout << "---------------------------- end = " << end << "--------------------------\n";
+    if (end == 0 || end >= _request.size()) {
+        std::cout << "error: end out of bounds\n";
+        return 1;
+    }
     if(_request[end] != '\n' || _request[end - 1] != '\r')
     {
         return 1;
@@ -174,9 +181,14 @@ int Request::check_request_format_post_multi() {
         if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
         {
             ++end_found;
-           for (std::vector<char>::const_iterator it2 = it + 4; it2 != _request.end(); it2++)
-           {
-                if ((*it2 == '\r' && *(it2 + 1) != '\n') || (*it2 == '\n' && *(it2 - 1) != '\r'))
+
+            std::vector<char>::const_iterator it2 = it + 4;
+            while (it2 != _request.end()) {
+                std::vector<char>::const_iterator next2 = it2 + 1;
+                if (next2 == _request.end())
+                    break;
+
+                if ((*it2 == '\r' && *next2 != '\n'))
                 {
                     return 1;
                 }
@@ -412,7 +424,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     return 1;
                 }
         }
-        if(_content_type == "application/x-www-form-urlencoded\r")
+        if(_content_type == "application/x-www-form-urlencoded\r") // pour requete en brut
         {
             if(parse_body_form() == 1 && check_request_format_post() == 1)
             {
@@ -432,11 +444,11 @@ int Request::parse_request(Client & client, Server const & server) {
                 filename_to_delete.assign(begin_file_name + sizeof(keyword) - 1, end_file_name);
                 
                 std::cout << "file to delete = " << filename_to_delete << std::endl;
-                std::ifstream file(("./upload/" + filename_to_delete).c_str());
+                std::ifstream file(("./www/upload/" + filename_to_delete).c_str());
                 if(file.is_open())
                 {
-                    std::remove(("./upload/" + filename_to_delete).c_str());
-                    if (std::ifstream(("./upload/" + filename_to_delete).c_str()))
+                    std::remove(("./www/upload/" + filename_to_delete).c_str());
+                    if (std::ifstream(("./www/upload/" + filename_to_delete).c_str()))
                     {
                         response = create_response_html(403, "forbidden");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
@@ -498,7 +510,7 @@ int Request::parse_request(Client & client, Server const & server) {
             new_file << _body_data.find("Content")->second.c_str();
             new_file.close();
         }
-        else if(_content_type == "text/plain\r")
+        else if(_content_type == "text/plain\r")// pour requete en brut
         {
             std::string filename = "upload.txt";
             std::ofstream new_file;
@@ -541,6 +553,7 @@ int Request::parse_request(Client & client, Server const & server) {
         }
         else if(_content_type.find("multipart/form-data", 0) != std::numeric_limits<size_t>::max())
         {
+            // std::vector<char> filename; filename a faire en vector de char ????
             std::string content_disposition, name, filename, content_type, content;
             std::vector<char> line;
             if (check_request_format_post_multi() == 1)
@@ -553,153 +566,238 @@ int Request::parse_request(Client & client, Server const & server) {
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
-                {
-                    response = create_response_html(400, "badreq");
-                    send(client.getClientFd(), response.c_str(), response.length(), 0);
-                    close(client.getClientFd());
-                    return 1;
-                }
-            boundary += _content_type.substr(pos + 9, _content_type.end() - _content_type.begin() - pos + 9) + '\n';
+            {
+                std::cout << "------------------ erreur 0 ----------------------\n";
+                response = create_response_html(400, "badreq");
+                send(client.getClientFd(), response.c_str(), response.length(), 0);
+                close(client.getClientFd());
+                return 1;
+            }
+            boundary += _content_type.substr(pos + 9);
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
+            {
+                response = create_response_html(400, "badreq");
+                send(client.getClientFd(), response.c_str(), response.length(), 0);
+                close(client.getClientFd());
+                return 1;
+            }
+            begin += boundary.size();
+            if (std::distance(begin, _body.end()) >= 2 && *begin == '\r' && *(begin + 1) == '\n')
+                begin += 2;
+            std::string final_boundary = boundary + "--";
+            std::vector<char>::iterator end = std::search(begin, _body.end(),boundary.begin(), boundary.end());
+            if (end == _body.end())
+            {
+                end = std::search(begin, _body.end(), final_boundary.begin(), final_boundary.end());
+                if (end == _body.end())
                 {
                     response = create_response_html(400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
                 }
-            std::vector<char>::iterator end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            if (end == _body.end())
-            {
-                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
-                {
-                    if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
-                    boundary += "--\r\n";
-                    break;
-                }
-                end =  std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             }
-            size_t boundary_pos = end - _body.begin();
-            begin += boundary.size();
-            for (;begin != end; begin++)
-            {
-                line.push_back(*begin);
-            }
-            //upload
-            const char keyword[] = {"Content-Disposition: form-data; name=\"filename\""};
-            begin = std::search(line.begin(), line.end(), keyword, keyword + sizeof(keyword) - 1);
-            if (begin != line.end())
-            {
-                const char pos[] = {'\r'};
-                end = std::search(line.begin() + 51, line.end(), pos, pos + sizeof(pos));
-                if (end != line.end())
-                {
-                    for (std::vector<char>::const_iterator it = line.begin() + 51; it != end; it++) 
-                        filename += *it;
-                }
-            }
-            else
-            {
-                response = create_response_html(400, "badreq");
-                send(client.getClientFd(), response.c_str(), response.length(), 0);
-                close(client.getClientFd());
-                return 1;
-            }
-            begin = std::search(_body.begin() + boundary_pos, _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            end = std::search(begin + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
-            if (end != _body.end())
-            {
-                for(std::string::iterator it = boundary.end() - 1; it != boundary.end(); it++)
-                {
-                    if (boundary.size() >= 2)
-                        boundary.erase(boundary.size() - 2);
-                    boundary += "--\r\n";
-                    break;
-                }
-                end =  std::search(end + boundary.size(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());     
-            }
-            line.erase(line.begin(), line.end() - 1);
-            for (;begin != end; begin++)
-            {
-                line.push_back(*begin);
-            }
-            const char keyword2[] = {"Content-Type:"};
-            begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
-            if (begin != line.end())
-            {
-                for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
-                {
-                    content_type += *it;
-                }
-                std::cout << "Content-type = " << content_type << std::endl;
-            }
-            // else
-            // {
-            //     std::cout << "Pas ok" << std::endl;
-            //     response = create_response_html(400, "badreq");
-            //     send(client.getClientFd(), response.c_str(), response.length(), 0);
-            //     close(client.getClientFd());
-            //     return 1;
-            // }
-            const char keyword3[] = {'\r', '\n', '\r', '\n'};
-            begin = std::search(line.begin(), line.end(), keyword3, keyword3 + sizeof(keyword3));
-            std::string delimiter = "\r\n";
-            std::vector<char>::iterator body_start = begin + 4; // skip \r\n\r\n
-            std::vector<char>::iterator body_end = std::search(body_start,line.end(),delimiter.begin(),delimiter.end());
 
-            if (body_end != line.end()) {
-                content.assign(body_start, body_end);
+            std::vector<char> line(begin,end);
+
+            size_t boundary_pos = end - _body.begin();
+
+            std::string keyword;
+            if(_url == "/create")
+                keyword = "Content-Disposition: form-data; name=\"filename\"";
+            if(_url == "/upload")
+                keyword = "Content-Disposition: form-data; name=\"filename\"; filename=\"";
+
+            begin = std::search(line.begin(), line.end(), keyword.begin(), keyword.end());
+            if (begin != line.end() && _url == "/upload")
+            {
+                std::vector<char>::iterator filename_start = begin + keyword.size();
+                std::vector<char>::iterator filename_end = std::find(filename_start, line.end(), '"');
+
+                if (filename_end != line.end())
+                    filename.assign(filename_start, filename_end);
+                else
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                const char keyword2[] = {"Content-Type:"}; 
+                begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
+                if (begin != line.end())
+                {
+                    for(std::vector<char>::const_iterator it = begin + 14; *it != '\r'; it++)
+                        content_type += *it;
+                }
+                else
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                const char header_end_seq[] = {'\r','\n','\r','\n'};
+                std::vector<char>::iterator body_start = std::search(begin, line.end(), header_end_seq, header_end_seq + 4);
+                if(body_start == line.end())
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                body_start += 4;
+                std::string boundary_last = "\r\n--";
+                std::vector<char>::iterator body_end = std::search(body_start, line.end(),boundary_last.begin(),boundary_last.end());
+                if(body_end == line.end())
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                if (body_end - 2 >= body_start && *(body_end - 2) == '\r' && *(body_end - 1) == '\n')
+                    body_end -= 2;
+                std::vector<char> content_upload(body_start, body_end);
+                std::ifstream test_open_file(("./www/upload/" + filename).c_str());
+                if(test_open_file.is_open())
+                {
+                    filename += "_";
+                    for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                    {
+                        std::stringstream ss;
+                        ss << i;
+                        filename += ss.str();
+                        if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                        {
+                            if (errno == EEXIST)
+                            {
+                                size_t pos = filename.find_last_of('_');
+                                filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                            }
+                        }
+                        else
+                            break;
+                    }
+                }
+                std::ofstream new_file;
+                new_file.open(("./www/upload/" + filename).c_str(), std::ofstream::out | std::ios::binary);
+                if(!new_file)
+                {   
+                    response = create_response_html(500, "ise");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                if (!content_upload.empty()) {
+                    new_file.write(&content_upload[0], content_upload.size());
+                }
+                new_file.close();
+                response = create_response_html(201, "crok");
+                std::cout << "response : " << response.c_str() << std::endl;
+                int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
+                std::cout << "byte send = " << received << std::endl;
+                std::cout << "respose lenght = " << response.length() << std::endl;
+                close(client.getClientFd());
+                return 0;
+            }
+            else if (begin != line.end() && _url == "/create")
+            {
+                std::vector<char>::iterator filename_start = begin + keyword.size() + 4;
+                filename.assign(filename_start, line.end());
+                
+                keyword = "Content-Disposition: form-data; name=\"content\"";
+                begin = std::search(_body.begin() + boundary_pos, _body.end(), keyword.begin(), keyword.end());
+                if(begin == _body.end())
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+
+                const char end_header[] = {'\r', '\n', '\r', '\n'};
+                std::vector<char>::iterator content_start = std::search(begin, _body.end(), end_header, end_header + 4);
+                if(content_start == _body.end())
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                content_start += 4;
+                std::string boundary_search = boundary;
+                size_t end = boundary_search.find_first_of("\r\n"); // delete "\r\n" at the end of boundary
+                if (end != std::string::npos)
+                    boundary_search = boundary_search.substr(0, end);
+                std::vector<char>::iterator content_end = std::search(content_start, _body.end(), boundary_search.begin(), boundary_search.end());
+                if(content_end == _body.end())
+                {
+                    response = create_response_html(400, "badreq");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                std::vector<char>content_create;
+                content_create.assign(content_start, content_end -2);
+
+                std::ifstream test_open_file(("./www/upload/" + filename).c_str());
+                if(test_open_file.is_open())
+                {
+                    std::cout << "File name already exist, add suffix" << std::endl;
+                    filename += "_";
+                    for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+                    {
+                        std::stringstream ss;
+                        ss << i;
+                        filename += ss.str();
+                        if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                        {
+                            if (errno == EEXIST)
+                            {
+                                size_t pos = filename.find_last_of('_');
+                                filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+                            }
+                        }
+                        else
+                            break;
+                    }
+                }
+                std::ofstream new_file;
+                new_file.open(("./www/upload/" + filename).c_str(), std::ofstream::out | std::ios::binary);
+                if(!new_file)
+                {   
+                    response = create_response_html(500, "ise");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                new_file.write(&content_create[0], content_create.size());
+                new_file.close();
+                response = create_response_html(201, "crok");
+                std::cout << "response : " << response.c_str() << std::endl;
+                int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
+                std::cout << "byte send = " << received << std::endl;
+                std::cout << "respose lenght = " << response.length() << std::endl;
+                close(client.getClientFd());
+                return 0;
             }
             else
             {
-                response = create_response_html(400, "badreq");
+                //quel erreur ?
+                // {
+                //     response = create_response_html(400, "badreq");
+                //     send(client.getClientFd(), response.c_str(), response.length(), 0);
+                //     close(client.getClientFd());
+                //     return 1;
+                // }
+                response = create_response_html(415, "umt");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
             }
-            std::ofstream new_file;
-            std::ifstream test_open_file(("./upload/" + filename).c_str());
-            if(test_open_file.is_open())
-            {
-                std::cout << "File name already exist, add suffix" << std::endl;
-                filename += "_";
-                for(int i = 0; i < std::numeric_limits<int>::max(); i++)
-                {
-                    std::stringstream ss;
-                    ss << i;
-                    filename += ss.str();
-                    if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
-                    {
-                        if (errno == EEXIST)
-                        {
-                            size_t pos = filename.find_last_of('_');
-                            filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
-                        }
-                    }
-                    else
-                        break;
-                }
-            }
-            new_file.open(("./upload/" + filename).c_str());
-            {
-                response = create_response_html(500, "ise");
-                send(client.getClientFd(), response.c_str(), response.length(), 0);
-                close(client.getClientFd());
-                return 1;
-            }
-            std::cout << "File = " << filename << std::endl;
-            new_file << content;
-            new_file.close();
         }
-        else
-        {
-            response = create_response_html(415, "umt");
-            send(client.getClientFd(), response.c_str(), response.length(), 0);
-            close(client.getClientFd());
-            return 1;
-        }
-        succes_code = 201;
     }
     else if (_methode == "DELETE")
     {
@@ -733,7 +831,6 @@ int Request::parse_request(Client & client, Server const & server) {
     close(client.getClientFd());
     return 0;
 }
-
 
 int Request::set_methode(std::string const & line)
 {
@@ -937,7 +1034,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         _url.erase(0, 1);
     // std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
-    std::cout << "File = " << _url << std::endl;
+    std::cout << "File (_url) = " << _url << std::endl;
     std::ostringstream ss;
     std::string body;
     if (!file)
@@ -1053,6 +1150,24 @@ std::string Request::create_response_html(int succes_code, std::string mode) {
         std::string body = ss.str();
         
         response << "HTTP/1.1 200 OK\r\n";
+        response << "Content-Type: text/html" << "\r\n";
+        response << "Content-Length: " << body.size() << "\r\n";
+        response << "Connection: keep-alive\r\n";
+        response << "\r\n";
+        response << ss.str();
+        return response.str();
+    }
+    else if (succes_code == 201 && mode == "crok")
+    {
+        std::ifstream file("./www/codes_pages/201.html", std::ios::binary);
+        if (!file.is_open())
+            return create_response_html(500, "ise");
+
+        std::stringstream ss;
+        ss << file.rdbuf();
+        std::string body = ss.str();
+        
+        response << "HTTP/1.1 201 Created\r\n";
         response << "Content-Type: text/html" << "\r\n";
         response << "Content-Length: " << body.size() << "\r\n";
         response << "Connection: keep-alive\r\n";
