@@ -67,23 +67,11 @@ std::string Request::get_content_length() {
 //check si on a bien \r\n a la fin des lignes de la requete get, return error 1
 int Request::check_request_format_get(std::string const &req) {
     std::string end;
-    // std::cout << "req ici = " << req << std::endl;
     end = req.substr(req.find("\r\n\r\n"), 4);
-    std::cout << "size - 4 = " << req.size() - 4 << std::endl;
-    std::cout << "pos = "<< req.find("\r\n\r\n") << std::endl;
     if (req.size() < 4)
-    {
-        std::cout << "error size" << std::endl;
         return 1;
-    }
-    // for (size_t i = 0; i < end.size(); ++i)
-    //     std::cout << "char[" << i << "] = " << static_cast<int>(end[i]) << std::endl;
     if(end != "\r\n\r\n")
-    {
-        std::cout << "end = " << end;
-        std::cout << "ici" << std::endl;
         return 1;
-    }
     for(std::string::const_iterator it = req.end() - req.find("\r\n\r\n"); it != req.begin(); it--)
     {
         if(*it == '\n' && *(it - 1) != '\r' )
@@ -102,8 +90,6 @@ int Request::check_request_format_get(std::string const &req) {
 
 int Request::getEOF_Pos() {
     int i = _request.size();
-    std::cout << "I = " << i << std::endl;
-
     std::vector<char>::const_iterator it = _request.end();
     while (it != _request.begin()) {
         --it;
@@ -120,7 +106,6 @@ int Request::check_request_format_post() {
     int end_found = 0;
     
     int end = getEOF_Pos();
-    std::cout << "req end = " << static_cast<int>(_request[end]) << std::endl;
     if(_request[end] != '\n' || _request[end - 1] != '\r')
     {
         return 1;
@@ -159,25 +144,16 @@ int Request::check_request_format_post() {
 int Request::check_request_format_post_multi() {
     int end_found = 0;
     unsigned long end = getEOF_Pos();
-    std::cout << "---------------------------- end = " << end << "--------------------------\n";
-    if (end == 0 || end >= _request.size()) {
-        std::cout << "error: end out of bounds\n";
+    if (end == 0 || end >= _request.size())
         return 1;
-    }
     if(_request[end] != '\n' || _request[end - 1] != '\r')
-    {
         return 1;
-    }
     for(std::vector<char>::const_iterator it = _request.begin(); it != _request.end(); it++)
     {
         if(*it == '\r' && *(it + 1) != '\n' )
-        {
             return 1;
-        }
         if(isalnum(*it) == 0 && *it == _request[0])
-        {
             return 1;
-        }
         if(*it == '\r' && *(it + 1) == '\n' && *(it + 2) == '\r' && *(it + 3) == '\n')
         {
             ++end_found;
@@ -189,16 +165,13 @@ int Request::check_request_format_post_multi() {
                     break;
 
                 if ((*it2 == '\r' && *next2 != '\n'))
-                {
                     return 1;
-                }
+                it2++;
            }
             break;
         }
         else if(*it == '\r' && *(it + 1) && isalnum(*(it + 1)) == 0 && *(it + 1) != '\n' && end_found == 0)
-        {
             return 1;
-        }
     }
     std::cout << "format post multi ok" << std::endl;
     return 0;
@@ -391,27 +364,6 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     if(_methode == "POST")
     {
-
-        // => CGI PYTHON POST, laisser commenter pour l'instant mais ne PAS supprimer !!
-
-        // std::ostringstream temp;
-        // execCgi(server.getCgi(), temp, _url, succes_code, _methode);
-        // if (succes_code == 404 || succes_code == 500)
-        // {
-        //     if (succes_code == 404)
-        //         response = create_response_html(404, "nofound");
-        //     else if (succes_code == 500)
-        //         response = create_response_html(500, "ise");
-        //     send(client.getClientFd(), response.c_str(), response.length(), 0);
-        //     close(client.getClientFd());
-        //     return 1;
-        // }
-        // response = temp.str();
-        // send(client.getClientFd(), response.c_str(), response.length(), 0);
-        // return (0);
-
-        // => FIN CGI PYTHON POST
-
         if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
             return 1;
         for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
@@ -433,6 +385,25 @@ int Request::parse_request(Client & client, Server const & server) {
                 close(client.getClientFd());
                 return 1;
             }
+            if(_url == "/srcs/cgi-bin/download.py")
+            {
+                std::ostringstream temp;
+                execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+                if (succes_code == 404 || succes_code == 500)
+                {
+                    if (succes_code == 404)
+                        response = create_response_html(404, "nofound");
+                    else if (succes_code == 500)
+                        response = create_response_html(500, "ise");
+                    send(client.getClientFd(), response.c_str(), response.length(), 0);
+                    close(client.getClientFd());
+                    return 1;
+                }
+                response = temp.str();
+                send(client.getClientFd(), response.c_str(), response.length(), 0);
+                close(client.getClientFd());
+                return (0);
+            }
             if(_url == "/delete")
             {
                 const char keyword[] = {"file_to_delete="};
@@ -443,7 +414,6 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::string filename_to_delete;
                 filename_to_delete.assign(begin_file_name + sizeof(keyword) - 1, end_file_name);
                 
-                std::cout << "file to delete = " << filename_to_delete << std::endl;
                 std::ifstream file(("./www/upload/" + filename_to_delete).c_str());
                 if(file.is_open())
                 {
@@ -469,7 +439,6 @@ int Request::parse_request(Client & client, Server const & server) {
                 }
                 
             }
-            std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
             std::ofstream new_file;
             std::string filename = _body_data.find("File+name")->second.c_str();
             std::ifstream test_open_file(filename.c_str());
@@ -533,10 +502,7 @@ int Request::parse_request(Client & client, Server const & server) {
                         return 1;
                     }
                     else
-                    {
                         break;
-                        //std::cerr << "Erreur d'ouverture du fichier\n";
-                    }
                 }
             }
             new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
@@ -547,7 +513,6 @@ int Request::parse_request(Client & client, Server const & server) {
                 close(client.getClientFd());
                 return 1;
             }
-            std::cout << "upload file = " << filename.c_str() << std::endl;
             new_file.write(&_body[0], _body.size());
             new_file.close();
         }
@@ -555,19 +520,10 @@ int Request::parse_request(Client & client, Server const & server) {
         {
             // std::vector<char> filename; filename a faire en vector de char ????
             std::string content_disposition, name, filename, content_type, content;
-            std::vector<char> line;
-            if (check_request_format_post_multi() == 1)
-            {
-                response = create_response_html(400, "badreq");
-                send(client.getClientFd(), response.c_str(), response.length(), 0);
-                close(client.getClientFd());
-                return 1;
-            }
             std::string boundary = "--";
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
             {
-                std::cout << "------------------ erreur 0 ----------------------\n";
                 response = create_response_html(400, "badreq");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
@@ -585,11 +541,13 @@ int Request::parse_request(Client & client, Server const & server) {
             begin += boundary.size();
             if (std::distance(begin, _body.end()) >= 2 && *begin == '\r' && *(begin + 1) == '\n')
                 begin += 2;
-            std::string final_boundary = boundary + "--";
+            std::string final_boundary = boundary;
+            final_boundary.erase(final_boundary.size()-1, 1);
+            std::string end_boundary = final_boundary + "--";
             std::vector<char>::iterator end = std::search(begin, _body.end(),boundary.begin(), boundary.end());
             if (end == _body.end())
             {
-                end = std::search(begin, _body.end(), final_boundary.begin(), final_boundary.end());
+                end = std::search(begin, _body.end(), end_boundary.begin(), end_boundary.end());
                 if (end == _body.end())
                 {
                     response = create_response_html(400, "badreq");
@@ -648,18 +606,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     return 1;
                 }
                 body_start += 4;
-                std::string boundary_last = "\r\n--";
-                std::vector<char>::iterator body_end = std::search(body_start, line.end(),boundary_last.begin(),boundary_last.end());
-                if(body_end == line.end())
-                {
-                    response = create_response_html(400, "badreq");
-                    send(client.getClientFd(), response.c_str(), response.length(), 0);
-                    close(client.getClientFd());
-                    return 1;
-                }
-                if (body_end - 2 >= body_start && *(body_end - 2) == '\r' && *(body_end - 1) == '\n')
-                    body_end -= 2;
-                std::vector<char> content_upload(body_start, body_end);
+                std::vector<char> content_upload(body_start, line.end());
                 std::ifstream test_open_file(("./www/upload/" + filename).c_str());
                 if(test_open_file.is_open())
                 {
@@ -698,15 +645,13 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::cout << "response : " << response.c_str() << std::endl;
                 int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
                 std::cout << "byte send = " << received << std::endl;
-                std::cout << "respose lenght = " << response.length() << std::endl;
                 close(client.getClientFd());
                 return 0;
             }
             else if (begin != line.end() && _url == "/create")
             {
                 std::vector<char>::iterator filename_start = begin + keyword.size() + 4;
-                filename.assign(filename_start, line.end());
-                
+                filename.assign(filename_start, line.end()- 2);
                 keyword = "Content-Disposition: form-data; name=\"content\"";
                 begin = std::search(_body.begin() + boundary_pos, _body.end(), keyword.begin(), keyword.end());
                 if(begin == _body.end())
@@ -752,7 +697,7 @@ int Request::parse_request(Client & client, Server const & server) {
                         std::stringstream ss;
                         ss << i;
                         filename += ss.str();
-                        if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+                        if(open(("./www/upload/" + filename).c_str(), O_CREAT | O_EXCL, 0644) == -1)
                         {
                             if (errno == EEXIST)
                             {
@@ -777,9 +722,9 @@ int Request::parse_request(Client & client, Server const & server) {
                 new_file.close();
                 response = create_response_html(201, "crok");
                 std::cout << "response : " << response.c_str() << std::endl;
+                std::cout << _methode << " " << _url << std::endl;
                 int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
                 std::cout << "byte send = " << received << std::endl;
-                std::cout << "respose lenght = " << response.length() << std::endl;
                 close(client.getClientFd());
                 return 0;
             }
@@ -825,9 +770,9 @@ int Request::parse_request(Client & client, Server const & server) {
         succes_code = 200;
     response = create_response(succes_code, server);
     std::cout << "response : " << response.c_str() << std::endl;
+    std::cout << _methode << " " << _url << std::endl;
     int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
     std::cout << "byte send = " << received << std::endl;
-    std::cout << "respose lenght = " << response.length() << std::endl;
     close(client.getClientFd());
     return 0;
 }
@@ -842,21 +787,16 @@ int Request::set_methode(std::string const & line)
             if (read == "GET" || read == "POST" || read == "DELETE")
                 _methode = read;
             else
-            {
-                std::cout << "return 1" << std::endl;
                 return 1;
-            }
             read.clear();
             it++;
         }
-    
         else if(*it == ' ' && _url.empty() )
         {
             _url = read;
             read.clear();
             it++;
         }
-    
         else if (*it == '\r')
         {
             if(read == "HTTP/1.1") 
@@ -876,11 +816,6 @@ void    Request::add_request(char buffer[], size_t size)
     {
         _request.push_back(buffer[i]);
     }
-    // for(size_t i = 0; i < size; i++)
-    // {
-    //     std::cout << _request[i];
-    // }
-    // std::cout << std::endl;
 }
 
 int Request::set_accept(std::string const & line)
@@ -946,10 +881,7 @@ int Request::set_body()
             _body.push_back(*it);
     }
     else
-    {
-        std::cout << "set body error" << std::endl;
         return 1;
-    }
     return 0;
 }
 
@@ -974,7 +906,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
     struct stat s;
     std::string temp;
     cgi_map     cgi_temp = server.getCgi();
-    // std::cout << "url = " << _url << std::endl;
     if (_url == "/")
         _url = "www/index.html";
     else if (_url == "/www/style.css")
@@ -994,36 +925,26 @@ std::string Request::create_response(int succes_code, Server const & server) {
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
-                {
-                    // it's a directory
                     _url = it->second.getUrl() + it->second.getIndexes().front();
-                }
                 else if( s.st_mode & S_IFREG )
-                {
-                    // it's a file
                     _url = it->second.getUrl();
-                }
             }
         }
         else
         {
             if (_url[0] == '/')
                 _url.erase(0, 1);
-            // std::cout << "stat url = " << _url << std::endl;
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
                 {
-                    // it's a directory
                     if (_url[_url.size() - 1] != '/')
                         _url += '/';
                     temp = _url;
-                    // std::cout << "_urlRoot = " << _url << std::endl;
                     _url = server.getRoot() + temp + server.getIndexes().front();
                 }
                 else if( s.st_mode & S_IFREG )
                 {
-                    // it's a file
                     temp = _url;
                     _url = server.getRoot() + temp;
                 }
@@ -1032,9 +953,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     if (_url[0] == '/')
         _url.erase(0, 1);
-    // std::cout << "url after = " << _url << std::endl;
     std::ifstream file(_url.c_str(), std::ios::binary);
-    std::cout << "File (_url) = " << _url << std::endl;
     std::ostringstream ss;
     std::string body;
     if (!file)
@@ -1047,7 +966,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
         _url = temp;
         if (_url[0] == '/')
             _url.erase(0, 1);
-        std::cout << "OpenDir url = " << _url << std::endl;
         DIR *dir = opendir(_url.c_str());
         struct dirent *openDir = NULL;
         struct stat currentDir;
@@ -1055,18 +973,11 @@ std::string Request::create_response(int succes_code, Server const & server) {
         while ((openDir = readdir(dir)) != NULL)
         {
             std::string file(openDir->d_name);
-            std::cout << "file = " << file << std::endl;
-            std::cout << "dans readdir" << std::endl;
             if (openDir->d_name[0] == '.')
                 continue;
-            std::cout << "stat file = " << file.c_str() << std::endl;
             stat((_url + file).c_str(), &currentDir);
             if(currentDir.st_mode & S_IFDIR)
-            {
-                std::cout << "is a dir" << std::endl;
-                // it's a directory
                 file += '/';
-            }
             html << "<li><a href='" << file  << "'>" << file << "</a></li>";
             
         }
@@ -1086,7 +997,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     else
     {
-        std::cout << "File found " << _url << std::endl;
         ss << file.rdbuf();
         body = ss.str();
         if (succes_code == 200)

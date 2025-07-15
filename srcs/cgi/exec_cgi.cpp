@@ -40,15 +40,18 @@ static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string &
         (char *)final_url.c_str(),
         NULL
     };
+
     char *envget[] = {
         (char *)("REQUEST_METHOD=GET"),
         (char *)("GATEWAY_INTERFACE=CGI/1.1"),
         (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+        NULL,
     };
     char *envpost[] = {
         (char *)("REQUEST_METHOD=POST"),
         (char *)("GATEWAY_INTERFACE=CGI/1.1"),
         (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+        NULL,
     };
     if (method == "GET")
         execve(bin.c_str(), argv, envget);

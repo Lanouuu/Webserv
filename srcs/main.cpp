@@ -47,11 +47,6 @@ int main(int ac, char **av, char **env)
                         clients[key].setUid(key);
                         break ;
                     }
-                    if (!clients.empty())
-                    {
-                        for(client_map::iterator it = clients.begin(); it != clients.end(); it++)
-                            std::cout << "client uid = " << it->second.getUid() << std::endl;
-                    }
                     char buf[255] = {0};
                     int readed = 255;
                     while (readed == 255)
@@ -60,7 +55,7 @@ int main(int ac, char **av, char **env)
                         readed = recv(temp.getClientFd(), buf, 255, 0);
                         // std::cout << "readed = " << readed << std::endl;
                         temp.getRequest().add_request(buf, sizeof(buf));
-                        std::cout << buf << std::flush;
+                        // std::cout << buf << std::flush;
                     }
                     index = 0;
                     for(;index < servers.size(); index++)
