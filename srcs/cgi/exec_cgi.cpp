@@ -88,19 +88,7 @@ static void parentRoutine(int pipefd[2], std::ostringstream & response, int & su
             succes_code = 404;
             return ;
         }
-        std::string::size_type header_end = cgi_output.find("\r\n\r\n");
-        if (header_end == std::string::npos)
-            header_end = cgi_output.find("\n\n");
-        if (header_end != std::string::npos) 
-        {
-            std::string headers = cgi_output.substr(0, header_end);
-            std::string body = cgi_output.substr(header_end + 4);
-            response << "HTTP/1.1 200 OK\r\n";
-            response << headers << "\r\n\r\n";
-            response << body;
-        } 
-        else 
-            response << cgi_output;
+        response << cgi_output;
     }
     else if (method == "GET")
     {

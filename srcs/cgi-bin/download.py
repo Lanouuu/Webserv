@@ -12,6 +12,7 @@ def main():
         return
     
     headers = (
+        "HTTP/1.1 200 OK\r\n"
         "Content-Type: application/octet-stream\r\n"
         f"Content-Disposition: attachment; filename=\"{os.path.basename(filepath)}\"\r\n"
         f"Content-Length: {os.path.getsize(filepath)}\r\n"
