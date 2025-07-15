@@ -45,7 +45,7 @@ std::string Request::get_host() {
     return _host;
 }
 
-std::vector<char> & Request::getRequest()
+std::vector<char> const & Request::getRequest() const
 {
     return _request;
 }

@@ -78,7 +78,7 @@ std::vector<std::string>    Server::getIndexes(void) const
     return (this->_serverIndexes);
 }
 
-int & Server::getSocket(void)
+int const & Server::getSocket(void) const
 {
     return (this->_serverSocket);
 }  

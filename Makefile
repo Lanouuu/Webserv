@@ -37,6 +37,8 @@ SOURCES_CLIENT	=	client/Client.cpp \
 
 SOURCES_CGI		=	cgi/exec_cgi.cpp \
 	
+SOURCES_UTILS	=	utils/utils.cpp \
+
 # **************************************************************************** #
 #                                                                              #
 #                                  OBJECTS                                     #
@@ -50,6 +52,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_SERVER:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CLIENT:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CGI:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_UTILS:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
@@ -66,6 +69,7 @@ INCLUDES		=	${INC_PATH}Server.hpp \
 					${INC_PATH}Parser.hpp \
 					${INC_PATH}server.h \
 					${INC_PATH}Request.hpp \
+					${INC_PATH}Utils.hpp \
 					${INC_PATH}cgi.h \
 
 # **************************************************************************** #

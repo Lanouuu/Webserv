@@ -30,7 +30,7 @@ class   Server
         location_map                getLocaMap(void) const;
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
-        int &                       getSocket(void);
+        int const &                 getSocket(void) const;
         size_t &                    getBodySize(void);
         cgi_map                     getCgi(void) const;
         errpage_map                 getErrPages(void) const;               
