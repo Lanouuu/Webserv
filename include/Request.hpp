@@ -57,7 +57,7 @@ class Request {
         void                                get_body();
         std::string                         get_content_type();
         std::string                         get_content_length();
-        std::vector<char> const &                 getRequest() const;
+        std::vector<char> const &           getRequest() const;
 
         int                                 set_methode(std::string const & line);
         int                                 set_accept(std::string const & line);
@@ -79,7 +79,8 @@ class Request {
         std::string                         convert_to_string();
 
         std::string                         create_response(int succes_code, Server const & server);
-        std::string                         create_response_html(int succes_code, std::string mode);
+        std::string                         status_response_html(const Server & server, int succes_code, std::string mode);
+        std::string                         searchErrPages(const errpage_map & err_pages, int code);
         std::string                         get_file_type(const std::string& path);
 };
 
