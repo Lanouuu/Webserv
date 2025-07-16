@@ -589,34 +589,20 @@ int Request::delete_file(Client const & client, Server const & server)
     {
         std::remove(("./upload/" + filename_to_delete).c_str());
         if (std::ifstream(("./upload/" + filename_to_delete).c_str()))
-        {
-            response = create_response_html(403, "forbidden");
-            send(client.getClientFd(), response.c_str(), response.length(), 0);
-            close(client.getClientFd());
-            return 1;
-        }
+            return request_error(client, 403, "forbidden");
         std::string response = create_response_html(200, "delete");
         send(client.getClientFd(), response.c_str(), response.length(), 0);
         close(client.getClientFd());
         return 0;
     }
-    else
-    {
-        response = create_response(404, server);
-        send(client.getClientFd(), response.c_str(), response.length(), 0);
-        close(client.getClientFd());
-        return 1;
-    }
+    return request_error(client, 404, "nofound");
 }
 
 int Request::urlencoded_handler(Client const & client, Server const & server)
 {
     std::string response;
     if(parse_body_form() == 1 && check_request_format_post() == 1)
-    {
-        std::cout << "error in parse_body_form" << std::endl;
-        return 400;
-    }
+        return request_error(client, 400, "badreq");
     if(_url == "/delete")
         return delete_file(client, server);
     std::cout << "nom du fichier a creer : " << _body_data.find("File+name")->second << std::endl;
@@ -639,10 +625,7 @@ int Request::urlencoded_handler(Client const & client, Server const & server)
                     size_t pos = filename.find_last_of('_');
                     filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
                 }
-                response = create_response_html(500, "ise");
-                send(client.getClientFd(), response.c_str(), response.length(), 0);
-                close(client.getClientFd());
-                return 1;
+                return request_error(client, 500, "ise");
             }
             else
                 break;
@@ -650,12 +633,7 @@ int Request::urlencoded_handler(Client const & client, Server const & server)
     }
     new_file.open(filename.c_str());
     if(!new_file.is_open())
-    {
-        response = create_response_html(500, "ise");
-        send(client.getClientFd(), response.c_str(), response.length(), 0);
-        close(client.getClientFd());
-        return 1;
-    }
+        return request_error(client, 500, "ise");
     std::cout << "File = " << filename << std::endl;
     decode_content();
     new_file << _body_data.find("Content")->second.c_str();
@@ -682,10 +660,7 @@ int Request::textPlain_Handler(Client const & client, Server const & server)
             {
                 if (errno == EEXIST)
                     continue;
-                response = create_response_html(500, "ise");
-                send(client.getClientFd(), response.c_str(), response.length(), 0);
-                close(client.getClientFd());
-                return 1;
+                return request_error(client, 500, "ise");
             }
             else
                 break; //std::cerr << "Erreur d'ouverture du fichier\n";
@@ -693,12 +668,7 @@ int Request::textPlain_Handler(Client const & client, Server const & server)
     }
     new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
     if(!new_file.is_open())
-    {
-        response = create_response_html(500, "ise");
-        send(client.getClientFd(), response.c_str(), response.length(), 0);
-        close(client.getClientFd());
-        return 1;
-    }
+        return request_error(client, 500, "ise");
     std::cout << "upload file = " << filename.c_str() << std::endl;
     new_file.write(&_body[0], _body.size());
     new_file.close();
