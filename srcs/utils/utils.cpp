@@ -57,3 +57,11 @@ int    read_request(client_map & clients, int const & socket_fd, int const & epo
     std::cout << buf << std::flush;
     return readed;
 }
+
+volatile sig_atomic_t stop = 0;
+
+void signal_handler(int s)
+{
+    std::cout << RED <<  "Caught signal " << s << END << std::endl;
+    stop = 1;
+}
