@@ -308,14 +308,14 @@ int Request::parse_request(Client & client, Server const & server) {
     req = convert_to_string();
     if(req.compare(0, 3, "GET") == 0 && check_request_format_get(req) == 1)
     {
-        response = create_response_html(400, "badreq");
+        response = status_response_html(server, 400, "badreq");
         send(client.getClientFd(), response.c_str(), response.length(), 0);
         close(client.getClientFd());
         return 1;
     }
     if(req.compare(0, 4, "POST") == 0 && check_request_format_post() == 1 && check_request_format_post_multi() == 1)
     {
-        response = create_response_html(400, "badreq");
+        response = status_response_html(server, 400, "badreq");
         send(client.getClientFd(), response.c_str(), response.length(), 0);
         close(client.getClientFd());
         return 1;
@@ -335,7 +335,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     {
                         if ((this->*funct[i])(line) == 1)
                         {
-                            response = create_response_html(400, "badreq");
+                            response = status_response_html(server, 400, "badreq");
                             send(client.getClientFd(), response.c_str(), response.length(), 0);
                             close(client.getClientFd());
                             return 1;
@@ -344,7 +344,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     }
                     else if(i == sizeof(methods) / sizeof(methods[0]) && word != methods[sizeof(methods) / sizeof(methods[0])])
                     {
-                        response = create_response_html(400, "badreq");
+                        response = status_response_html(server, 400, "badreq");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
                         close(client.getClientFd());
                         return 1;
@@ -370,7 +370,7 @@ int Request::parse_request(Client & client, Server const & server) {
         {
             if(!isdigit(*it))
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -380,7 +380,7 @@ int Request::parse_request(Client & client, Server const & server) {
         {
             if(parse_body_form() == 1 && check_request_format_post() == 1)
             {
-                response = create_response_html(400, "badreq");
+                response = status_response_html(server, 400, "badreq");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -392,9 +392,9 @@ int Request::parse_request(Client & client, Server const & server) {
                 if (succes_code == 404 || succes_code == 500)
                 {
                     if (succes_code == 404)
-                        response = create_response_html(404, "nofound");
+                        response = status_response_html(server, 404, "nofound");
                     else if (succes_code == 500)
-                        response = create_response_html(500, "ise");
+                        response = status_response_html(server, 500, "ise");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -420,12 +420,12 @@ int Request::parse_request(Client & client, Server const & server) {
                     std::remove(("./www/upload/" + filename_to_delete).c_str());
                     if (std::ifstream(("./www/upload/" + filename_to_delete).c_str()))
                     {
-                        response = create_response_html(403, "forbidden");
+                        response = status_response_html(server, 403, "forbidden");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
                         close(client.getClientFd());
                         return 1;
                     }
-                    std::string response = create_response_html(200, "delete");
+                    std::string response = status_response_html(server, 200, "delete");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 0;
@@ -458,7 +458,7 @@ int Request::parse_request(Client & client, Server const & server) {
                             size_t pos = filename.find_last_of('_');
                             filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
                         }
-                        response = create_response_html(500, "ise");
+                        response = status_response_html(server, 500, "ise");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
                         close(client.getClientFd());
                         return 1;
@@ -470,7 +470,7 @@ int Request::parse_request(Client & client, Server const & server) {
             new_file.open(filename.c_str());
             if(!new_file.is_open())
             {
-                response = create_response_html(500, "ise");
+                response = status_response_html(server, 500, "ise");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -496,7 +496,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     {
                         if (errno == EEXIST)
                             continue;
-                        response = create_response_html(500, "ise");
+                        response = status_response_html(server, 500, "ise");
                         send(client.getClientFd(), response.c_str(), response.length(), 0);
                         close(client.getClientFd());
                         return 1;
@@ -508,7 +508,7 @@ int Request::parse_request(Client & client, Server const & server) {
             new_file.open(filename.c_str(), std::ostream::in | std::ostream::out);
             if(!new_file.is_open())
             {
-                response = create_response_html(500, "ise");
+                response = status_response_html(server, 500, "ise");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -524,7 +524,7 @@ int Request::parse_request(Client & client, Server const & server) {
             size_t pos = _content_type.find("boundary=", 0);
             if (pos == std::numeric_limits<size_t>::max())
             {
-                response = create_response_html(400, "badreq");
+                response = status_response_html(server, 400, "badreq");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -533,7 +533,7 @@ int Request::parse_request(Client & client, Server const & server) {
             std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
             if (begin == _body.end())
             {
-                response = create_response_html(400, "badreq");
+                response = status_response_html(server, 400, "badreq");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -550,7 +550,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 end = std::search(begin, _body.end(), end_boundary.begin(), end_boundary.end());
                 if (end == _body.end())
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -577,7 +577,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     filename.assign(filename_start, filename_end);
                 else
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -591,7 +591,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 }
                 else
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -600,7 +600,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::vector<char>::iterator body_start = std::search(begin, line.end(), header_end_seq, header_end_seq + 4);
                 if(body_start == line.end())
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -632,7 +632,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 new_file.open(("./www/upload/" + filename).c_str(), std::ofstream::out | std::ios::binary);
                 if(!new_file)
                 {   
-                    response = create_response_html(500, "ise");
+                    response = status_response_html(server, 500, "ise");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -641,7 +641,7 @@ int Request::parse_request(Client & client, Server const & server) {
                     new_file.write(&content_upload[0], content_upload.size());
                 }
                 new_file.close();
-                response = create_response_html(201, "crok");
+                response = status_response_html(server, 201, "crok");
                 std::cout << "response : " << response.c_str() << std::endl;
                 int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
                 std::cout << "byte send = " << received << std::endl;
@@ -656,7 +656,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 begin = std::search(_body.begin() + boundary_pos, _body.end(), keyword.begin(), keyword.end());
                 if(begin == _body.end())
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -666,7 +666,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::vector<char>::iterator content_start = std::search(begin, _body.end(), end_header, end_header + 4);
                 if(content_start == _body.end())
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -679,7 +679,7 @@ int Request::parse_request(Client & client, Server const & server) {
                 std::vector<char>::iterator content_end = std::search(content_start, _body.end(), boundary_search.begin(), boundary_search.end());
                 if(content_end == _body.end())
                 {
-                    response = create_response_html(400, "badreq");
+                    response = status_response_html(server, 400, "badreq");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
@@ -713,14 +713,14 @@ int Request::parse_request(Client & client, Server const & server) {
                 new_file.open(("./www/upload/" + filename).c_str(), std::ofstream::out | std::ios::binary);
                 if(!new_file)
                 {   
-                    response = create_response_html(500, "ise");
+                    response = status_response_html(server, 500, "ise");
                     send(client.getClientFd(), response.c_str(), response.length(), 0);
                     close(client.getClientFd());
                     return 1;
                 }
                 new_file.write(&content_create[0], content_create.size());
                 new_file.close();
-                response = create_response_html(201, "crok");
+                response = status_response_html(server, 201, "crok");
                 std::cout << "response : " << response.c_str() << std::endl;
                 std::cout << _methode << " " << _url << std::endl;
                 int received = send(client.getClientFd(), response.c_str(), response.length(), 0);
@@ -732,12 +732,12 @@ int Request::parse_request(Client & client, Server const & server) {
             {
                 //quel erreur ?
                 // {
-                //     response = create_response_html(400, "badreq");
+                //     response = status_response_html(server, 400, "badreq");
                 //     send(client.getClientFd(), response.c_str(), response.length(), 0);
                 //     close(client.getClientFd());
                 //     return 1;
                 // }
-                response = create_response_html(415, "umt");
+                response = status_response_html(server, 415, "umt");
                 send(client.getClientFd(), response.c_str(), response.length(), 0);
                 close(client.getClientFd());
                 return 1;
@@ -760,7 +760,7 @@ int Request::parse_request(Client & client, Server const & server) {
         }
         else
         {
-            response = create_response_html(404, "nofound");
+            response = status_response_html(server, 404, "nofound");
             send(client.getClientFd(), response.c_str(), response.length(), 0);
             close(client.getClientFd());
             return 1;
@@ -957,10 +957,10 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream ss;
     std::string body;
     if (!file)
-        return create_response_html(404, "nofound");
+        return status_response_html(server, 404, "nofound");
     std::stringstream html;
     if (!file &&  s.st_mode & S_IFREG)
-        return create_response_html(404, "nofound");
+        return status_response_html(server, 404, "nofound");
     else if (!file &&  s.st_mode & S_IFDIR)
     {
         _url = temp;
@@ -993,7 +993,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     {
         execCgi(cgi_temp, response, _url, succes_code, _methode);
         if (succes_code == 500)
-            return (create_response_html(succes_code, "ise"));
+            return (status_response_html(server, succes_code, "ise"));
     }
     else
     {
@@ -1024,7 +1024,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
         {
             std::ifstream file("./www/codes_pages/201.html", std::ios::binary | std::ios::ate);
             if (!file.is_open())
-                return create_response_html(500, "ise");
+                return status_response_html(server, 500, "ise");
             std::streamsize ssize = file.tellg();
             file.seekg(0);
             long size = static_cast<long>(ssize);
@@ -1047,129 +1047,111 @@ std::string Request::create_response(int succes_code, Server const & server) {
     return response.str();
 }
 
+
+std::string Request::searchErrPages(const errpage_map & err_pages, int code)
+{
+    int         stop = 0;
+    std::string custom_page;
+
+    for (errpage_map::const_iterator errit = err_pages.begin(); errit != err_pages.end(); errit++)
+    {
+        std::vector<int> temp = (*errit).second;
+        for (std::vector<int>::const_iterator vit = temp.begin(); vit != temp.end(); vit++)
+        {
+            if ((*vit) == code)
+            {
+                custom_page = (*errit).first;
+                stop = 1;
+                break ;
+            }
+        }
+        if (stop)
+            break ;
+    }
+    return (custom_page);
+}
+
+
 //create response with the html file related (file successfully created for ex)
-std::string Request::create_response_html(int succes_code, std::string mode) {
-    std::ostringstream response;
-    if(succes_code == 200 && mode == "delete")
+std::string Request::status_response_html(const Server & server, int succes_code, std::string mode) 
+{
+    std::ostringstream  response;
+    std::string         custom_page;
+    std::stringstream   ss;
+    
+    custom_page = searchErrPages(server.getErrPages(), succes_code);
+    if (!custom_page.empty())
+    {
+        custom_page = '.' + custom_page;
+        std::ifstream file(custom_page.c_str(), std::ios::binary);
+        if (!file.is_open())
+            return status_response_html(server, 500, "ise");
+        ss << file.rdbuf();
+        response << "HTTP/1.1 " << succes_code <<  "Ta requete est pourrie\r\n"; 
+    }
+    else if(succes_code == 200 && mode == "delete")
     {
         std::ifstream file("./www/codes_pages/delete_success.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
-        std::stringstream ss;
-        ss << file.rdbuf();
-        std::string body = ss.str();
-        
+            return status_response_html(server, 500, "ise");
+        ss << file.rdbuf();      
         response << "HTTP/1.1 200 OK\r\n";
-        response << "Content-Type: text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << ss.str();
-        return response.str();
     }
     else if (succes_code == 201 && mode == "crok")
     {
         std::ifstream file("./www/codes_pages/201.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
-
-        std::stringstream ss;
-        ss << file.rdbuf();
-        std::string body = ss.str();
-        
+            return status_response_html(server, 500, "ise");
+        ss << file.rdbuf();      
         response << "HTTP/1.1 201 Created\r\n";
-        response << "Content-Type: text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << ss.str();
-        return response.str();
     }
     else if(succes_code == 400 && mode == "badreq")
     {
-        std::stringstream ss;
-        std::string body;
         std::ifstream file("www/codes_pages/400.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
+            return status_response_html(server, 500, "ise");
+        ss << file.rdbuf();      
         response << "HTTP/1.1 400 Bad Request\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
     }
     else if(succes_code == 403 && mode == "forbidden")
     {
-        std::stringstream ss;
-        std::string body;
         std::ifstream file("www/codes_pages/403.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
+            return status_response_html(server, 500, "ise");
         ss << file.rdbuf();
-        body = ss.str();
         response << "HTTP/1.1 403 Forbidden\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
     }
     else if(succes_code == 404 && mode == "nofound")
     {
-        std::stringstream ss;
-        std::string body;
         std::ifstream file("www/codes_pages/404.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
+            return status_response_html(server, 500, "ise");
         ss << file.rdbuf();
-        body = ss.str();
         response << "HTTP/1.1 404 Not Found\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
     }
     else if(succes_code == 415 && mode == "umt")
     {
-        std::stringstream ss;
-        std::string body;
         std::ifstream file("www/codes_pages/415.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
+            return status_response_html(server, 500, "ise");
         ss << file.rdbuf();
-        body = ss.str();
         response << "HTTP/1.1 415 Unsupported Media Type\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
     }
     else if(succes_code == 500 && mode == "ise")
     {
-        std::stringstream ss;
-        std::string body;
         std::ifstream file("www/codes_pages/500.html", std::ios::binary);
         if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
+            ss << "Error 500";
+        else
+            ss << file.rdbuf();
         response << "HTTP/1.1 500 Internal Server Error\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
     }
     else
         return 0;
+    response << "Content-Type: " << "text/html" << "\r\n";
+    response << "Content-Length: " << ss.str().size() << "\r\n";
+    response << "Connection: keep-alive\r\n";
+    response << "\r\n";
+    response << ss.str();
+    return (response.str());
 }

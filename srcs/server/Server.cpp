@@ -95,7 +95,7 @@ cgi_map Server::getCgi(void) const
     return (this->_serverCgi);
 }
 
-errpage_map Server::getErrPages(void) const
+const errpage_map Server::getErrPages(void) const
 {
     return (this->_serverErrorPages);
 }

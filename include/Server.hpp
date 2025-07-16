@@ -34,7 +34,7 @@ class   Server
         int const &                 getSocket(void) const;
         size_t &                    getBodySize(void);
         cgi_map                     getCgi(void) const;
-        errpage_map                 getErrPages(void) const;               
+        const errpage_map           getErrPages(void) const;               
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;
