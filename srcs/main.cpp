@@ -1,5 +1,6 @@
 #include "server.h"
 #include "Utils.hpp"
+#include "signal.h"
 
 int main(int ac, char **av, char **env)
 {
@@ -16,13 +17,19 @@ int main(int ac, char **av, char **env)
         int         epoll_fd;
         int         n_event;
         // size_t      index = 0;
+        struct sigaction sa;
+        sa.sa_handler = signal_handler;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
         
         parsingConfFile(av[1], servers);
         if ((epoll_fd = epoll_create1(0)) == -1)
             throw std::runtime_error( RED "Error: epoll_create: " END + std::string(strerror(errno)));
         launchServers(servers, epoll_fd);
         struct epoll_event events[MAX_EVENTS]; // tableau d'event
-        while (1)
+        if(sigaction(SIGINT, &sa, NULL) == -1)
+            throw std::runtime_error( RED "Error: sigaction: " END + std::string(strerror(errno)));
+        while (!stop)
         {
             if((n_event = epoll_wait(epoll_fd, events, MAX_EVENTS, -1)) == -1)
                 throw std::runtime_error( RED "Error: epoll_wait: " END + std::string(strerror(errno)));
