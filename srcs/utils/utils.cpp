@@ -1,5 +1,5 @@
 #include "Utils.hpp"
-
+#include "Error_code.hpp"
 void    addClient(client_map & clients, Client const & client)
 {
     // for(int i = 0; i < std::numeric_limits<int>::max(); i++)
@@ -56,4 +56,38 @@ int    read_request(client_map & clients, int const & socket_fd, int const & epo
     clients[socket_fd].getRequest().add_request(buf, sizeof(buf));
     std::cout << buf << std::flush;
     return readed;
+}
+
+
+//create response with the html file related (file successfully created for ex)
+std::string create_response_html(int succes_code, std::string mode)
+{
+    std::string (*funct[])(void) = {&error_code_200, &error_code_201, &error_code_400, &error_code_403, &error_code_404, &error_code_415, &error_code_500};
+    
+    switch (succes_code)
+    {
+        case 200:
+            if (mode == "delete")
+                return (*funct[0])();
+        case 201:
+            if (mode == "crok")
+                return (*funct[1])();
+        case 400:
+            if (mode == "badreq")
+                return (*funct[2])();
+        case 403:
+            if (mode == "forbidden")
+                return (*funct[3])();
+        case 404:
+            if (mode == "nofound")
+                return (*funct[4])();
+        case 415:
+            if (mode == "umt")
+                return (*funct[5])();
+        case 500:
+            if (mode == "ise")
+                return (*funct[6])();
+        default:
+            return 0;
+    }
 }

@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include <sys/wait.h>
 #include <dirent.h>
-
+#include "Utils.hpp"
 Request::Request() {
 
 }
@@ -888,115 +888,6 @@ int Request::delete_request_handler(int & success_code, Client const & client, S
     else
         return 404;
     return 0;
-}
-
-//create response with the html file related (file successfully created for ex)
-std::string Request::create_response_html(int succes_code, std::string mode) {
-    std::ostringstream response;
-    if(succes_code == 200 && mode == "delete")
-    {
-        std::ifstream file("./www/codes_pages/delete_success.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        std::stringstream ss;
-        ss << file.rdbuf();
-        std::string body = ss.str();
-        
-        response << "HTTP/1.1 200 OK\r\n";
-        response << "Content-Type: text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << ss.str();
-        return response.str();
-    }
-    else if(succes_code == 400 && mode == "badreq")
-    {
-        std::stringstream ss;
-        std::string body;
-        std::ifstream file("www/codes_pages/400.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 400 Bad Request\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
-    else if(succes_code == 403 && mode == "forbidden")
-    {
-        std::stringstream ss;
-        std::string body;
-        std::ifstream file("www/codes_pages/403.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 403 Forbidden\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
-    else if(succes_code == 404 && mode == "nofound")
-    {
-        std::stringstream ss;
-        std::string body;
-        std::ifstream file("www/codes_pages/404.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 404 Not Found\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
-    else if(succes_code == 415 && mode == "umt")
-    {
-        std::stringstream ss;
-        std::string body;
-        std::ifstream file("www/codes_pages/415.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 415 Unsupported Media Type\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
-    else if(succes_code == 500 && mode == "ise")
-    {
-        std::stringstream ss;
-        std::string body;
-        std::ifstream file("www/codes_pages/500.html", std::ios::binary);
-        if (!file.is_open())
-            return create_response_html(500, "ise");
-        ss << file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 500 Internal Server Error\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
-    else
-        return 0;
 }
 
 int Request::set_accept(std::string const & line)
