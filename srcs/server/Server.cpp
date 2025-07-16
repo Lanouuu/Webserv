@@ -12,6 +12,8 @@ Server::Server(void) : _serverRoot("./"), _serverSocket(-1), _serverBodySize(104
 
 Server::~Server(void)
 {
+    if (_serverSocket != -1)
+        close(_serverSocket);
     return ;
 }
 

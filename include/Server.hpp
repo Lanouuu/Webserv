@@ -7,6 +7,7 @@
 # include <sys/socket.h>
 # include <sys/epoll.h>
 # include <string.h>
+# include <unistd.h>
 # include "Location.hpp"
 
 typedef std::map<std::string, Location> location_map;

@@ -2,9 +2,10 @@
 #include "Utils.hpp"
 #include "signal.h"
 
-int main(int ac, char **av, char **env)
+int main(int ac, char **av)
 {
-    (void)env;
+    int         epoll_fd = -1;
+    client_map  clients;
     try
     {
         if (ac > 2)
@@ -13,8 +14,7 @@ int main(int ac, char **av, char **env)
             throw std::invalid_argument( RED "Error: " END "expected \'.conf\' file");
         
         serv_vector servers;
-        client_map  clients;
-        int         epoll_fd;
+        
         int         n_event;
         // size_t      index = 0;
         struct sigaction sa;
@@ -67,9 +67,17 @@ int main(int ac, char **av, char **env)
     }
     catch(const std::exception& e)
     {
+        if (epoll_fd != -1)
+            close(epoll_fd);
+        for (client_map::iterator it = clients.begin(); it != clients.end(); it++)
+        {
+            if ((*it).first != -1)
+                close((*it).first);
+        }
+        if (stop == 1)
+            return (0);
         std::cerr << e.what() << std::endl << std::endl;
         return (1);
     }
-    
     return (0);
 }
