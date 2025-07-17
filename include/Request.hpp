@@ -12,6 +12,7 @@
 #include <vector>
 #include <algorithm>
 #include "Server.hpp"
+# include "cgi.h"
 
 class Client;
 
@@ -30,9 +31,14 @@ class Request {
         std::string _content_length;
         std::map<std::string, std::string> _body_data;
         std::vector<char> _request;
+        Location*                           _reqLocation;
+
+        void                                findLocation(const Server & server, const std::string url);
 
     public:
         Request();
+        ~Request(void);
+
         std::string get_methode();
         std::string get_url();
         std::string get_http_version();
@@ -72,9 +78,19 @@ class Request {
         int multipart_formData_handler(Client const & client, Server const & server);
         int getEOF_Pos();
         int delete_file(Client const & client, Server const & server);
-        int request_error(Client const & client, int const error_code, std::string const mode);
+        int request_error(const Server & server, Client const & client, int const error_code, std::string const mode);
         std::string convert_to_string();
 
         std::string create_response(int succes_code, Server const & server);
+        std::string status_response_html(const Server & server, int succes_code, std::string mode);
+        std::string searchErrPages(const errpage_map & err_pages, int code);
         std::string get_file_type(const std::string& path);
+
+        std::string error_code_200(const Server & server);
+        std::string error_code_201(const Server & server);
+        std::string error_code_400(const Server & server);
+        std::string error_code_403(const Server & server);
+        std::string error_code_404(const Server & server);
+        std::string error_code_415(const Server & server);
+        std::string error_code_500(const Server & server);
 };

@@ -8,6 +8,7 @@
 # include <sys/socket.h>
 # include <sys/epoll.h>
 # include <string.h>
+# include <unistd.h>
 # include "Location.hpp"
 
 typedef std::map<std::string, Location> location_map;
@@ -23,6 +24,7 @@ class   Server
         void                        setHost(const std::string & host);
         void                        setPort(const uint16_t & port);
         void                        setIP(const std::string & ip);
+        void                        setBodySize(const size_t & size);
 
         std::string                 getRoot(void) const;
         uint16_t                    getPort(void) const;
@@ -30,21 +32,26 @@ class   Server
         location_map                getLocaMap(void) const;
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
-        int const &                 getSocket(void) const;               
+        int const &                 getSocket(void) const;
+        size_t &                    getBodySize(void);
+        cgi_map                     getCgi(void) const;
+        const errpage_map           getErrPages(void) const;                        
 
         void                        printServNames(void) const;
         void                        printErrorPage(void) const;
         void                        printIndexes(void) const;
+        void                        printCgi(void) const;
 
         void                        addName(const std::string & name);
         void                        addLocation(const std::string & name, const Location & location);
         void                        addErrorPages(const std::pair<std::string, std::vector<int> > & pages);
         void                        addIndex(const std::string & index);
+        void                        addCgi(const std::pair<std::string, std::string> cgi_pair);
         void                        clearIndex(void);
+        void                        deleteErrPage(const std::string & err_page);
 
         void                        fillStruct(void);
         void                        fillSocket(void);
-
         void                        launchServer(int & epoll_fd);
 
     private:
@@ -59,6 +66,8 @@ class   Server
         location_map                _serverLocations;
         sockaddr_in                 _serverSa;
         int                         _serverSocket;
+        size_t                      _serverBodySize;
+        cgi_map                     _serverCgi;
 };
   
 #endif

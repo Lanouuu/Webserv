@@ -12,6 +12,8 @@ Server::Server(void) : _serverRoot("./"), _serverSocket(-1)
 
 Server::~Server(void)
 {
+    if (_serverSocket != -1)
+        close(_serverSocket);
     return ;
 }
 
@@ -39,6 +41,12 @@ void    Server::setPort(const uint16_t & port)
 void    Server::setIP(const std::string & ip)
 {
     this->_serverIP = ip;
+    return ;
+}
+
+void    Server::setBodySize(const size_t & size)
+{
+    this->_serverBodySize = size;
     return ;
 }
 
@@ -75,7 +83,22 @@ std::vector<std::string>    Server::getIndexes(void) const
 int const &                 Server::getSocket(void) const
 {
     return (this->_serverSocket);
-}   
+}  
+
+size_t &    Server::getBodySize(void)
+{
+    return (this->_serverBodySize);
+}
+
+cgi_map Server::getCgi(void) const
+{
+    return (this->_serverCgi);
+}
+
+const errpage_map Server::getErrPages(void) const
+{
+    return (this->_serverErrorPages);
+}
 
 /****************************************************************************/
 /*                           Members Functions                              */
@@ -118,6 +141,20 @@ void    Server::printIndexes(void) const
     return ;
 }
 
+void    Server::printCgi(void) const
+{
+    int i = 1;
+    if (!_serverCgi.empty())
+    {
+        for (cgi_map::const_iterator it = _serverCgi.begin(); it != _serverCgi.end(); it++)
+        {
+            std::cout
+                << "\tCgi [" << i << "] " << (*it).first << " = " << (*it).second << std::endl;
+            i++;
+        }
+    }
+}
+
 void    Server::addName(const std::string & name)
 {
     this->_serverName.push_back(name);
@@ -135,6 +172,13 @@ void    Server::addErrorPages(const std::pair<std::string, std::vector<int> > & 
     _serverErrorPages.insert(pages);
     return ;
 }
+
+void Server::addCgi(const std::pair<std::string, std::string> cgi_pair)
+{
+    _serverCgi.insert(cgi_pair);
+    return ;
+}
+
 
 void    Server::fillStruct(void)
 {
@@ -178,5 +222,12 @@ void    Server::addIndex(const std::string & index)
 void    Server::clearIndex(void)
 {
     _serverIndexes.clear();
+    return ;
+}
+
+void    Server::deleteErrPage(const std::string & err_page)
+{
+    if (!_serverErrorPages.empty())
+        _serverErrorPages.erase(err_page);
     return ;
 }

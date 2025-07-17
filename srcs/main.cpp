@@ -1,9 +1,8 @@
 #include "server.h"
 #include "Utils.hpp"
 
-int main(int ac, char **av, char **env)
+int main(int ac, char **av)
 {
-    (void)env;
     try
     {
         if (ac > 2)
@@ -34,12 +33,12 @@ int main(int ac, char **av, char **env)
                     Client temp;
                     if (isServerSocket(socket_fd, servers))
                     {
-                        std::cout << "Server socket =  " << socket_fd << std::endl;
                         setClient(temp, socket_fd, epoll_fd);
                         addClient(clients, temp);
                     }
                     else
                     {
+                        std::cout << RED "Socket = " << socket_fd << END << std::endl;
                         if (read_request(clients, socket_fd, epoll_fd) == 0)
                             continue;
                         // for(;index < servers.size(); index++)
@@ -49,8 +48,13 @@ int main(int ac, char **av, char **env)
                         // }
                         if (clients[socket_fd].RequestIsComplete())
                         {
+                            std::vector<char> req = clients[socket_fd].getRequest().getRequest();
+                            for (unsigned int i = 0; i < req.size(); i++)
+                                std::cout << BLUE << req[i];
+                            std::cout << END << std::endl;
                             clients[socket_fd].getRequest().parse_request(clients[socket_fd], servers[0]);
-                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp.getClientEpollStruct());
+                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, NULL);
+                            close(socket_fd);
                             clients.erase(socket_fd);
                         }
                     }
