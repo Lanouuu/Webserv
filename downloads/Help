@@ -1,0 +1,31 @@
+-----------------------------------------
+
+\ \      / /__| |__  ___  ___ _ ____   __
+ \ \ /\ / / _ \  _ \/ __|/ _ \ '__\ \ / /
+  \ V  V /  __/ |_) \__ \  __/ |   \ V /
+   \_/\_/ \___|_.__/|___/\___|_|    \_/   
+
+-----------------------------------------
+
+
+Documentation for Webserv :
+
+
+1 - Try GET method :                For test a simple GET request, return the "get.html" file.
+
+2 - Create file with POST :         For create and upload a file in the "upload" directory with a POST request.
+
+3 - Upload file with POST :         For upload an existing file in the "upload" directory with a POST request.
+
+4 - DELETE file :                   For delete a file in the "upload" directory with a DELETE request.
+
+5 - See date and time :             Execute the cgi date.sh -> show server date and time.
+
+6 - Go on youtube :                 Execute the cgi redirect.sh -> just a simple youtube redirection.
+
+7 - Download help :                 Download this help (execute cgi download.py, POST).
+
+
+-----------------------------------------
+
+© 2025 Webserv, Inc. aciezadl - jaung - ade-fran

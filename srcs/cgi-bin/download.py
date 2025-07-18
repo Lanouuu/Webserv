@@ -3,7 +3,7 @@ import sys
 
 def main():
 
-    filepath = "./Makefile"
+    filepath = "./downloads/Help"
 
     if not os.path.isfile(filepath):
         print("Status: 404 Not Found")
