@@ -58,6 +58,7 @@ int main(int ac, char **av)
                         {
                             clients[socket_fd].getRequest().parse_request(clients[socket_fd], servers[0]);
                             epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp.getClientEpollStruct());
+                            close(socket_fd);
                             clients.erase(socket_fd);
                         }
                     }
