@@ -27,6 +27,9 @@ Client::~Client(void)
 Client &    Client::operator=(const Client & rhs)
 {
     this->_clientFd = rhs._clientFd;
+    this->_client_event = rhs._client_event;
+    this->_request = rhs._request;
+    this->_uid = rhs._uid;
     return (*this);
 }
 
@@ -61,7 +64,7 @@ void    Client::setFd(const int & fd)
     return ;
 }
 
-void        Client::setUid(std::string const & uid)
+void    Client::setUid(std::string const & uid)
 {
     this->_uid = uid;
     return ;

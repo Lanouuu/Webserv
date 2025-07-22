@@ -8,12 +8,15 @@
 
 # include <iostream>
 # include <map>
+# include <map>
 # include <vector>
 # include <exception>
 # include <errno.h>
 # include <algorithm>
 # include <limits>
 # include <utility>
+
+typedef std::map<std::string, std::string> cgi_map;
 
 typedef std::map<std::string, std::string> cgi_map;
 

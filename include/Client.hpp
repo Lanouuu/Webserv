@@ -13,10 +13,10 @@ class   Client
         Client(const Client & src);
         ~Client(void);
 
-        Client &    operator=(const Client & rhs);
+        Client &            operator=(const Client & rhs);
 
-        void        setFd(const int & fd);
-        void        setUid(std::string const & uid);
+        void                setFd(const int & fd);
+        void                setUid(std::string const & uid);
 
         int const &         getClientFd(void) const;
         std::string const & getUid(void);

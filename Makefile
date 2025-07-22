@@ -36,9 +36,11 @@ SOURCES_SERVER	=	server/launch_servers.cpp \
 SOURCES_CLIENT	=	client/Client.cpp \
 
 SOURCES_CGI		=	cgi/exec_cgi.cpp \
-	
+
 SOURCES_UTILS	=	utils/utils.cpp \
 
+SOURCES_ERROR_CODE	=	error_code/error_code.cpp \
+	
 # **************************************************************************** #
 #                                                                              #
 #                                  OBJECTS                                     #
@@ -53,6 +55,7 @@ OBJECTS			=	$(addprefix ${OBJECTS_PATH}, ${SOURCES_MAIN:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CLIENT:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_CGI:.cpp=.o}) \
 					$(addprefix ${OBJECTS_PATH}, ${SOURCES_UTILS:.cpp=.o}) \
+					$(addprefix ${OBJECTS_PATH}, ${SOURCES_ERROR_CODE:.cpp=.o}) \
 
 # **************************************************************************** #
 #                                                                              #
