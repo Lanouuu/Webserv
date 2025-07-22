@@ -439,7 +439,6 @@ void    Request::add_request(char buffer[], size_t size)
 {
     for (size_t i = 0; i < size; i++)
         _request.push_back(buffer[i]);
-    }
 }
 
 int Request::set_body()
