@@ -3,13 +3,14 @@
 #include <dirent.h>
 #include "Utils.hpp"
 
-Request::Request() {
+Request::Request() : _reqLocation(NULL){
 
 }
 
 Request::~Request(void)
 {
-    delete _reqLocation;
+    if(_reqLocation)
+        delete _reqLocation;
     return ;
 }
 
@@ -750,9 +751,9 @@ int Request::textPlain_Handler(Client const & client, Server const & server)
 
 int Request::request_error(const Server & server, Client const & client, int const error_code, std::string const mode)
 {
-    std::string response;
-
-    response = status_response_html(server, error_code, mode);
+    std::cerr << RED << "ICI 754" << END << std::endl;
+    std::string response = status_response_html(server, error_code, mode);
+    std::cerr << RED << "ICI 756" << END << std::endl;
     send(client.getClientFd(), response.c_str(), response.length(), 0);
     return 1;
 }
@@ -900,7 +901,7 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
             return request_error(server, client, 500, "ise");
         new_file.write(&content_create[0], content_create.size());
         new_file.close();
-        request_error(server, client, 201, "crock");
+        request_error(server, client, 201, "crok");
         return 0;
     }
     else
@@ -1001,13 +1002,12 @@ std::string Request::status_response_html(const Server & server, int succes_code
     custom_page = searchErrPages(server.getErrPages(), succes_code);
     if (!custom_page.empty())
     {
-        std::cout << RED "SUCESS CODE = " << succes_code << END << std::endl;
         custom_page = '.' + custom_page;
         std::ifstream file(custom_page.c_str(), std::ios::binary);
         if (!file.is_open())
             return status_response_html(server, 500, "ise");
         ss << file.rdbuf();
-        response << "HTTP/1.1 " << succes_code <<  "Ta requete est pourrie\r\n";
+        response << "HTTP/1.1 " << succes_code <<  " Ta requete est pourrie\r\n";
         response << "Content-Type: " << "text/html" << "\r\n";
         response << "Content-Length: " << ss.str().size() << "\r\n";
         response << "Connection: keep-alive\r\n";
