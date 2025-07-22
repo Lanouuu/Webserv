@@ -85,6 +85,29 @@ main {
     background-color: #91b6fb;
 }
 
+.card-button {
+    display: block;
+    background-color: #f0f0f0;
+    border: 2px solid #ccc;
+    border-radius: 12px;
+    padding: 20px;
+    width: 200px;
+    text-align: center;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+    color: #333;
+    font-weight: bold;
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.card-button:hover {
+    transform: scale(1.05);
+    background-color: #91b6fb;
+}
+
 /* footer style */
 footer {
     position:fixed;
@@ -155,6 +178,36 @@ input[type=submit]:hover {
 }
 
 .error a {
+    display: inline-flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+    margin-top: 40px;
+    border: 0px;
+    background-color:#91b6fb;
+    border-radius: 20px;
+    height: 40px;
+    width: 250px;
+    text-decoration: none;
+    color: black;
+}
+
+/* codes pages style (text and buton home page) */
+.text_btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    flex-direction: column;
+}
+
+.text_btn h1 {
+    margin-top: 20px;
+    font-size: 2vw;
+    letter-spacing: 5px;
+}
+
+.text_btn a {
     display: inline-flex;
     align-items: center;
     text-align: center;

@@ -188,6 +188,8 @@ int Request::check_request_format_post() {
 int Request::check_request_format_post_multi() {
     int end_found = 0;
     unsigned long end = getEOF_Pos();
+    if (end == 0 || end >= _request.size())
+        return 1;
     if(_request[end] != '\n' || _request[end - 1] != '\r')
         return 1;
     for(std::vector<char>::const_iterator it = _request.begin(); it != _request.end(); it++)
@@ -476,6 +478,7 @@ std::string Request::get_file_type(const std::string& path) {
     if (ext == "ico") return "image/x-icon";
     if (ext == "txt") return "text/plain";
     if (ext == "sh") return "script";
+    if (ext == "py") return "script";
     return "application/octet-stream";
 }
 
@@ -483,7 +486,7 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     struct stat s;
     std::string temp;
-    std::cout << "url = " << _url << std::endl;
+    cgi_map     cgi_temp = server.getCgi();
     if (_url == "/")
         _url = "www/index.html";
     else if (_url == "/www/style.css")
@@ -498,6 +501,8 @@ std::string Request::create_response(int succes_code, Server const & server) {
         location_map::iterator it = locations.find(_url);
         if (it != locations.end())
         {
+            std::cout << "location trouver" << std::endl;
+            cgi_temp = (*it).second.getCgi();
             if(stat(_url.c_str(), &s) == 0)
             {
                 if( s.st_mode & S_IFDIR )
@@ -532,19 +537,11 @@ std::string Request::create_response(int succes_code, Server const & server) {
     std::ifstream file(_url.c_str(), std::ios::binary);
     std::ostringstream ss;
     std::string body;
+    if (!file)
+        return status_response_html(server, 404, "nofound");
     std::stringstream html;
-    if (!file &&  s.st_mode & S_IFREG) {
-        std::ifstream error_file("www/codes_pages/404.html", std::ios::binary);
-        ss << error_file.rdbuf();
-        body = ss.str();
-        response << "HTTP/1.1 404 Not Found\r\n";
-        response << "Content-Type: " << "text/html" << "\r\n";
-        response << "Content-Length: " << body.size() << "\r\n";
-        response << "Connection: keep-alive\r\n";
-        response << "\r\n";
-        response << body;
-        return response.str();
-    }
+    if (!file &&  s.st_mode & S_IFREG)
+        return status_response_html(server, 404, "nofound");
     else if (!file &&  s.st_mode & S_IFDIR)
     {
         _url = temp;
@@ -560,11 +557,8 @@ std::string Request::create_response(int succes_code, Server const & server) {
             if (openDir->d_name[0] == '.')
                 continue;
             stat((_url + file).c_str(), &currentDir);
-            if(currentDir.st_mode & S_IFDIR )
-            {
-                // it's a directory
+            if(currentDir.st_mode & S_IFDIR)
                 file += '/';
-            }
             html << "<li><a href='" << file  << "'>" << file << "</a></li>";
             
         }
@@ -578,70 +572,12 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     else if(get_file_type(_url) == "script")
     {
-        int pipefd[2];
-        if (pipe(pipefd) == -1)
-        {
-            response << "error";
-            return response.str();
-        }
-
-        pid_t pid;
-        pid = fork();
-        if(pid < 0)
-        {
-            response << "error";
-            return response.str();  
-        }
-        if(pid == 0)
-        {
-            dup2(pipefd[1], STDOUT_FILENO);
-            close(pipefd[0]);
-            close(pipefd[1]);
-            std::string file_name;
-            std::string::size_type pos = _url.find_last_of('/');
-            if(pos == std::string::npos)    
-                file_name = _url.substr(pos + 1);
-            else
-                file_name = _url;
-            char *argv[] = {
-                (char *)file_name.c_str(),
-                NULL
-            };
-
-            // ===> Variables d'environnement CGI
-            char *envp[] = {
-                (char *)"REQUEST_METHOD=GET",
-                (char *)"GATEWAY_INTERFACE=CGI/1.1",
-                (char *)"SERVER_PROTOCOL=HTTP/1.1",
-                // (char *)"CONTENT_LENGTH=0",
-                // (char *)"SCRIPT_NAME=/cgi-bin/script.sh",
-                NULL
-            };
-            // std::cout << "url avant exec : " << _url.c_str() << std::endl;
-            execve(_url.c_str(), argv, envp);
-            perror("execve");
-            exit(1);
-        }
-        else
-        {
-            std::cout << "in parent" << std::endl;
-            close(pipefd[1]);
-            char buffer[4096];
-            ssize_t count;
-            wait(NULL);
-            while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
-            {
-                // write(client_fd, buffer, count);
-                response << buffer;
-                // std::cout << "response in sh : " << response.str() << std::endl;
-            }    
-            close(pipefd[0]);
-            return response.str();
-        }
+        execCgi(cgi_temp, response, _url, succes_code, _methode);
+        if (succes_code == 500)
+            return (status_response_html(server, succes_code, "ise"));
     }
     else
     {
-        std::cout << "File found " << _url << std::endl;
         ss << file.rdbuf();
         body = ss.str();
         if (succes_code == 200)
@@ -666,15 +602,25 @@ std::string Request::create_response(int succes_code, Server const & server) {
             }
         }
         else if (succes_code == 201)
-        {           
+        {
+            std::ifstream file("./www/codes_pages/201.html", std::ios::binary | std::ios::ate);
+            if (!file.is_open())
+                return status_response_html(server, 500, "ise");
+            std::streamsize ssize = file.tellg();
+            file.seekg(0);
+            long size = static_cast<long>(ssize);
+            size += 27;
+
+            std::ostringstream ss;
+            ss << file.rdbuf();
+            std::string body = ss.str();
+            
             response << "HTTP/1.1 201 Created\r\n";
-            response << _url << "\r\n";
             response << "Content-Type: " << get_file_type(_url) << "\r\n";
-            response << "Content-Length: " << "27" << "\r\n";
+            response << "Content-Length: " << body.size() << "\r\n";
             response << "Connection: keep-alive\r\n";
             response << "\r\n";
-            response << "File successfully created\r\n";
-            
+            response << ss.str();
         }
         else if (succes_code == 204)
             response << "HTTP/1.1 204 No Content\r\n";
@@ -781,7 +727,6 @@ int Request::urlencoded_handler(Client const & client, Server const & server)
 
 int Request::textPlain_Handler(Client const & client, Server const & server)
 {
-    (void)server;
     std::string filename = "upload.txt";
     std::ofstream new_file;
     std::ifstream test_open_file(filename.c_str());
@@ -1014,8 +959,6 @@ int  Request::post_request_handler(int & success_code, Client const & client, Se
 
 int Request::delete_request_handler(int & success_code, Client const & client, Server const & server)
 {
-    (void)client;
-    (void)server;
     _url.erase(0, 1);
     std::ifstream file(_url.c_str());
 
@@ -1067,6 +1010,7 @@ std::string Request::status_response_html(const Server & server, int succes_code
     custom_page = searchErrPages(server.getErrPages(), succes_code);
     if (!custom_page.empty())
     {
+        std::cout << RED "SUCESS CODE = " << succes_code << END << std::endl;
         custom_page = '.' + custom_page;
         std::ifstream file(custom_page.c_str(), std::ios::binary);
         if (!file.is_open())

@@ -50,6 +50,7 @@ void    Lexer::initServIdent(void)
     _servID.insert("error_page");
     _servID.insert("index");
     _servID.insert("max_body_size");
+    _servID.insert("cgi");
     return ;
 }
 
@@ -71,7 +72,9 @@ void    Lexer::initErrorPages(void)
     _servError.insert("201");
     _servError.insert("204");
     _servError.insert("400");
+    _servError.insert("403");
     _servError.insert("404");
+    _servError.insert("415");
     _servError.insert("500");
     return ;
 }

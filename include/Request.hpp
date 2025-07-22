@@ -1,3 +1,6 @@
+#ifndef REQUEST_HPP
+# define REQUEST_HPP
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -36,7 +39,7 @@ class Request {
         void                                findLocation(const Server & server, const std::string url);
 
     public:
-        Request();
+        Request(void);
         ~Request(void);
 
         std::string get_methode();
@@ -94,3 +97,5 @@ class Request {
         std::string error_code_415(const Server & server);
         std::string error_code_500(const Server & server);
 };
+
+#endif

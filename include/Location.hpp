@@ -34,22 +34,30 @@ class   Location
         void        setAutoIndex(const bool & autoindex);
         void        setIsDirectory(const bool & isdirectory);
         void        setIndexes(const std::vector<std::string> & indexes);
+        void                                setBodySize(const size_t & size);
+        void                                setCgi(const cgi_map cgi);
 
         std::string                         getBaseUri(void) const;
         std::string                         getUrl(void) const;
         std::string                         getAlias(void) const;
         std::vector<std::string> const &    getIndexes(void) const;
-        bool        getAutoIndex(void) const;
-        bool        getIsDirectory(void) const;
+        bool                                getAutoIndex(void) const;
+        bool                                getIsDirectory(void) const;
+        size_t                              getBodySize(void) const;
+        cgi_map                             getCgi(void) const;
 
         void        addMethod(const std::string & method);
         void        addIndex(const std::string & index);
+        void        addCgi(const std::pair<std::string, std::string> cgi_pair);
 
         void        uploadIndex(const std::string & uri);
         void        clearIndex(void);
+        void        clearMethods(void);
+        void        clearCgi(void);
 
         void        printIndexes(void) const;
         void        printMethod(void) const;
+        void        printCgi(void) const;
 
     private:
     
@@ -62,7 +70,8 @@ class   Location
         std::vector<std::string>    _locationMethod;
         bool                        _locationAutoIndex;
         bool                        _isDirectory;
-
+        size_t                      _locationBodySize;
+        cgi_map                     _locationCgi;
 };
 
 #endif

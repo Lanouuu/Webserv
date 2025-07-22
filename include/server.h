@@ -13,5 +13,6 @@
 
 void    parsingConfFile(std::string file, serv_vector & servers);
 void    launchServers(serv_vector & servers, int & epoll_fd);
+void    printServers(serv_vector & servers);
 
 #endif

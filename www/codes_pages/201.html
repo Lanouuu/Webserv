@@ -1,12 +1,3 @@
-#!/bin/sh
-echo "HTTP/1.1 200 OK"
-echo "Content-Type: text/html";
-echo "";
-
-tmp=`/bin/date`
-
-cat << EOF
-
 <!DOCTYPE html>
 <html>
     <head>
@@ -23,8 +14,7 @@ cat << EOF
         </header>
         <main>
             <div class="text_btn">
-                <h1>The current date on the server is</h1>
-                <h3>$tmp</h3>
+                <h1>File successfuly created !</h1>
                 <a href="/www/index.html" class="btn-home">Go to home page</a>
             </div>
         </main>
@@ -33,5 +23,3 @@ cat << EOF
         <p>© 2025 Webserv, Inc. aciezadl - jaung - ade-fran</p>
     </footer>
 </html>
-
-EOF
