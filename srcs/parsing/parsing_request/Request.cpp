@@ -3,7 +3,8 @@
 #include <dirent.h>
 #include "Utils.hpp"
 
-Request::Request() : _reqLocation(NULL){
+Request::Request() : _reqLocation(NULL)
+{
 
 }
 
