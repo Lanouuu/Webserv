@@ -11,15 +11,18 @@
             <h1><a href="/www/index.html">Webserv</a></h1>
         </header>
         <main>
-            <form action ="/delete" method="POST">        
-                <label for="file_to_delete">File to delete :</label>
-                <input type="text" id="file_to_delete" name="file_to_delete" placeholder="exemple.txt" required>
-                <br><br>
-
-                <input type="hidden" name="_method" value="DELETE">
-
-                <button type="submit">Supprimer</button> 
-            </form>
+            <div class="delete">
+                <h1>Delete</h1>
+                <form action ="/delete" method="POST">        
+                    <label for="file_to_delete">File to delete :</label>
+                    <input type="text" id="file_to_delete" name="file_to_delete" placeholder="exemple.txt" required>
+                    <br><br>
+    
+                    <input type="hidden" name="_method" value="DELETE">
+    
+                    <button type="submit">Supprimer</button> 
+                </form>
+            </div>
         </main>
         <footer>
             <p>© 2025 Webserv, Inc. aciezadl - jaung - ade-fran</p>
