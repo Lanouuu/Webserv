@@ -2,6 +2,7 @@
 #include <sys/wait.h>
 #include <dirent.h>
 #include "Utils.hpp"
+#include "cgi.h"
 
 Request::Request() : _reqLocation(NULL)
 {
@@ -475,6 +476,121 @@ std::string Request::get_file_type(const std::string& path) {
     return "application/octet-stream";
 }
 
+static std::string    getExtension(const std::string & _url)
+{
+    std::string file_name;
+    std::string::size_type pos = _url.find_last_of('/');
+    file_name = (pos == std::string::npos) ? _url : _url.substr(pos + 1);
+    std::string extension = file_name.substr(file_name.find('.'));
+    return (extension);
+}
+
+static std::string  getBin(const cgi_map & cgi, const std::string & extension)
+{
+    std::string bin;
+    for (cgi_map::const_iterator it = cgi.begin(); it != cgi.end(); it++)
+    {
+        if ((*it).first == extension)
+        {
+            bin = (*it).second;
+            break ;
+        }
+    }
+    return (bin);
+}
+
+static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string & _url, const std::string & method)
+{
+    std::cout << RED << "inside child routine" << END << std::endl;
+    std::string extension = getExtension(_url);
+    std::string bin = getBin(cgi, extension);
+    dup2(pipefd[1], STDOUT_FILENO);
+    close(pipefd[0]);
+    close(pipefd[1]);
+    std::string final_url;
+    if (method == "POST")
+        final_url = "." +_url;
+    else
+        final_url = _url;
+    char *argv[] = {
+        (char *)bin.c_str(),
+        (char *)final_url.c_str(),
+        NULL
+    };
+
+    char *envget[] = {
+        (char *)("REQUEST_METHOD=GET"),
+        (char *)("GATEWAY_INTERFACE=CGI/1.1"),
+        (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+        NULL,
+    };
+    char *envpost[] = {
+        (char *)("REQUEST_METHOD=POST"),
+        (char *)("GATEWAY_INTERFACE=CGI/1.1"),
+        (char *)("SERVER_PROTOCOL=HTTP/1.1"),
+        NULL,
+    };
+    if (method == "GET")
+    {
+        std::cerr << RED << "Child process running CGI" << END << std::endl;
+        execve(bin.c_str(), argv, envget);
+    }
+    else if (method == "POST")
+    {
+        std::cerr << RED << "Child process running CGI" << END << std::endl;
+        execve(bin.c_str(), argv, envpost);
+    }
+    std::cerr << RED << "Webserv: execve: " << END << strerror(errno) << std::endl;
+    exit(1);
+}
+
+static void parentRoutine(int pipefd[2], std::ostringstream & response, int & succes_code, const std::string & method, pid_t child_pid)
+{
+    close(pipefd[1]);
+    char buffer[4096];
+    ssize_t count;
+    int status;
+    int exit_code = 0;
+    // wait(&status);
+    pid_t ret = waitpid(child_pid, &status, WNOHANG);
+    if(ret == -1)
+    {
+        // std::perror("waitpid");
+        std::cout << RED << "waitpid error" << END << std::endl;
+        close(pipefd[0]);
+        succes_code = 500;
+        return ;
+    }
+    if (WIFEXITED(status))
+        exit_code = WEXITSTATUS(status);
+    if (exit_code == 1)
+    {
+        close(pipefd[0]);
+        succes_code = 500;
+        return ;
+    }
+    if (method == "POST")
+    {
+        std::string cgi_output;
+        while ((count = read(pipefd[0], buffer, sizeof(buffer))) > 0)
+            cgi_output.append(buffer, count);
+        if (cgi_output.find("404 Not Found") != std::string::npos)
+        {
+            succes_code = 404;
+            close(pipefd[0]);
+            return ;
+        }
+        response << cgi_output;
+    }
+    else if (method == "GET")
+    {
+        while((count = read((pipefd[0]), buffer, sizeof(buffer))) > 0)
+            response.write(buffer, count);
+    }
+    close(pipefd[0]);
+    return ;
+}
+
 std::string Request::create_response(int succes_code, Server const & server) {
     std::ostringstream response;
     struct stat s;
@@ -565,7 +681,37 @@ std::string Request::create_response(int succes_code, Server const & server) {
     }
     else if(get_file_type(_url) == "script")
     {
-        execCgi(cgi_temp, response, _url, succes_code, _methode);
+        // execCgi(cgi_temp, response, _url, succes_code, _methode);
+        if (cgi_temp.empty())
+        {
+            std::cerr << RED << "Webserv: " << END << "No rules for cgi" << std::endl;
+            return status_response_html(server, 500, "ise");
+        }
+        int pipefd[2];
+        if (pipe(pipefd) == -1)
+        {
+            std::cerr << RED << "Webserv: pipe: " << END << strerror(errno) << std::endl;
+            return status_response_html(server, 500, "ise");
+        }
+        pid_t pid;
+        pid = fork();
+        std::cerr << RED <<  "fork returned: " << pid << " (this process id: " << getpid() << ", parent pid: " << getppid() << ")" << END << std::endl;
+        if(pid < 0)
+        {
+            std::cerr << RED << "Webserv: fork: " << END << strerror(errno) << std::endl;
+            return status_response_html(server, 500, "ise");
+        }
+        if(pid == 0)
+        {
+            std::cerr << ">> CHILD (pid = " << getpid() << ")" << std::endl;
+            sleep(1);
+            childRoutine(cgi_temp, pipefd, _url, _methode);
+        }
+        else
+        {
+            std::cerr << ">> PARENT" << std::endl;
+            parentRoutine(pipefd, response, succes_code, _methode, pid);
+        }
         if (succes_code == 500)
             return (status_response_html(server, succes_code, "ise"));
     }
@@ -659,64 +805,64 @@ int Request::delete_file(Client const & client, Server const & server)
     return request_error(server, client, 404, "nofound");
 }
 
-int Request::urlencoded_handler(Client const & client, Server const & server)
-{
-    std::string response;
-    int succes_code = 0;
-    if(parse_body_form() == 1 && check_request_format_post() == 1)
-        return request_error(server, client, 400, "badreq");
-    if(_url == "/srcs/cgi-bin/download.py")
-    {
-        std::ostringstream temp;
-        execCgi(server.getCgi(), temp, _url, succes_code, _methode);
-        if (succes_code == 404 || succes_code == 500)
-        {
-            if (succes_code == 404)
-                response = status_response_html(server, succes_code, "nofound");
-            else if (succes_code == 500)
-                response = status_response_html(server, succes_code, "ise");
-            send(client.getClientFd(), response.c_str(), response.length(), 0);
-            return 1;
-        }
-        response = temp.str();
-        send(client.getClientFd(), response.c_str(), response.length(), 0);
-        return (0);
-    }
-    if(_url == "/delete")
-        return delete_file(client, server);
-    std::ofstream new_file;
-    std::string filename = _body_data.find("File+name")->second.c_str();
-    std::ifstream test_open_file(filename.c_str());
-    if(test_open_file.is_open())
-    {
-        std::cout << "File name already exist, add suffix" << std::endl;
-        filename += "_";
-        for(int i = 0; i < std::numeric_limits<int>::max(); i++)
-        {
-            std::stringstream ss;
-            ss << i;
-            filename += ss.str();
-            if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
-            {
-                if (errno == EEXIST)
-                {
-                    size_t pos = filename.find_last_of('_');
-                    filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
-                }
-                return request_error(server, client, 500, "ise");
-            }
-            else
-                break;
-        }
-    }
-    new_file.open(filename.c_str());
-    if(!new_file.is_open())
-        return request_error(server, client, 500, "ise");
-    decode_content();
-    new_file << _body_data.find("Content")->second.c_str();
-    new_file.close();
-    return 0;
-}
+// int Request::urlencoded_handler(Client const & client, Server const & server)
+// {
+//     std::string response;
+//     int succes_code = 0;
+//     if(parse_body_form() == 1 && check_request_format_post() == 1)
+//         return request_error(server, client, 400, "badreq");
+//     if(_url == "/srcs/cgi-bin/download.py")
+//     {
+//         std::ostringstream temp;
+//         execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+//         if (succes_code == 404 || succes_code == 500)
+//         {
+//             if (succes_code == 404)
+//                 response = status_response_html(server, succes_code, "nofound");
+//             else if (succes_code == 500)
+//                 response = status_response_html(server, succes_code, "ise");
+//             send(client.getClientFd(), response.c_str(), response.length(), 0);
+//             return 1;
+//         }
+//         response = temp.str();
+//         send(client.getClientFd(), response.c_str(), response.length(), 0);
+//         return (0);
+//     }
+//     if(_url == "/delete")
+//         return delete_file(client, server);
+//     std::ofstream new_file;
+//     std::string filename = _body_data.find("File+name")->second.c_str();
+//     std::ifstream test_open_file(filename.c_str());
+//     if(test_open_file.is_open())
+//     {
+//         std::cout << "File name already exist, add suffix" << std::endl;
+//         filename += "_";
+//         for(int i = 0; i < std::numeric_limits<int>::max(); i++)
+//         {
+//             std::stringstream ss;
+//             ss << i;
+//             filename += ss.str();
+//             if(open(filename.c_str(), O_CREAT | O_EXCL, 0644) == -1)
+//             {
+//                 if (errno == EEXIST)
+//                 {
+//                     size_t pos = filename.find_last_of('_');
+//                     filename.erase(pos + 1, (filename.end() - filename.begin()) - pos);
+//                 }
+//                 return request_error(server, client, 500, "ise");
+//             }
+//             else
+//                 break;
+//         }
+//     }
+//     new_file.open(filename.c_str());
+//     if(!new_file.is_open())
+//         return request_error(server, client, 500, "ise");
+//     decode_content();
+//     new_file << _body_data.find("Content")->second.c_str();
+//     new_file.close();
+//     return 0;
+// }
 
 int Request::textPlain_Handler(Client const & client, Server const & server)
 {
@@ -931,7 +1077,7 @@ int  Request::post_request_handler(int & success_code, Client const & client, Se
 
     int i = 0;
     std::string types[] = {"application/x-www-form-urlencoded\r", "text/plain\r", "multipart/form-data"};
-    int (Request::*PostRequestsHandler[])(Client const &, Server const &) = {&Request::urlencoded_handler, &Request::textPlain_Handler, &Request::multipart_formData_handler};
+    int (Request::*PostRequestsHandler[])(Client const &, Server const &) = {&Request::textPlain_Handler, &Request::multipart_formData_handler};
     std::cout << "COntent type = " << _content_type << std::endl;
     for (; i < 3; i++)
     {

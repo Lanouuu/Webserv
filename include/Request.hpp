@@ -78,7 +78,7 @@ class Request {
         int parse_body_form();
         void    add_request(char buffer[], size_t size);
         void    decode_content();
-        int urlencoded_handler(Client const & client, Server const & server);
+        // int urlencoded_handler(Client const & client, Server const & server);
         int textPlain_Handler(Client const & client, Server const & server);
         int multipart_formData_handler(Client const & client, Server const & server);
         int getEOF_Pos();

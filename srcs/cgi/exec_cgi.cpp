@@ -25,6 +25,7 @@ static std::string  getBin(const cgi_map & cgi, const std::string & extension)
 
 static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string & _url, const std::string & method)
 {
+    std::cout << RED << "inside child routine" << END << std::endl;
     std::string extension = getExtension(_url);
     std::string bin = getBin(cgi, extension);
     dup2(pipefd[1], STDOUT_FILENO);
@@ -54,21 +55,36 @@ static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string &
         NULL,
     };
     if (method == "GET")
+    {
+        std::cerr << RED << "Child process running CGI" << END << std::endl;
         execve(bin.c_str(), argv, envget);
+    }
     else if (method == "POST")
+    {
+        std::cerr << RED << "Child process running CGI" << END << std::endl;
         execve(bin.c_str(), argv, envpost);
+    }
     std::cerr << RED << "Webserv: execve: " << END << strerror(errno) << std::endl;
     exit(1);
 }
 
-static void parentRoutine(int pipefd[2], std::ostringstream & response, int & succes_code, const std::string & method)
+static void parentRoutine(int pipefd[2], std::ostringstream & response, int & succes_code, const std::string & method, pid_t child_pid)
 {
     close(pipefd[1]);
     char buffer[4096];
     ssize_t count;
     int status;
     int exit_code = 0;
-    wait(&status);
+    // wait(&status);
+    pid_t ret = waitpid(child_pid, &status, 0);
+    if(ret == -1)
+    {
+        // std::perror("waitpid");
+        std::cout << RED << "waitpid error" << END << std::endl;
+        close(pipefd[0]);
+        succes_code = 500;
+        return ;
+    }
     if (WIFEXITED(status))
         exit_code = WEXITSTATUS(status);
     if (exit_code == 1)
@@ -117,6 +133,7 @@ void execCgi(const cgi_map & cgi, std::ostringstream & response, const std::stri
     }
     pid_t pid;
     pid = fork();
+    std::cerr << "fork returned: " << pid << ", getpid: " << getpid() << std::endl;
     if(pid < 0)
     {
         succes_code = 500;
@@ -124,8 +141,14 @@ void execCgi(const cgi_map & cgi, std::ostringstream & response, const std::stri
         return ;
     }
     if(pid == 0)
+    {
+        std::cerr << ">> CHILD" << std::endl;
         childRoutine(cgi, pipefd, _url, method);
+    }
     else
-        parentRoutine(pipefd, response, succes_code, method);
+    {
+        std::cerr << ">> PARENT" << std::endl;
+        parentRoutine(pipefd, response, succes_code, method, pid);
+    }
     return ;
 }

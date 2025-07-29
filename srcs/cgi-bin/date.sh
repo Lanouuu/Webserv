@@ -4,7 +4,7 @@ echo "Content-Type: text/html";
 echo "";
 
 tmp=`/bin/date`
-
+sleep 5
 cat << EOF
 
 <!DOCTYPE html>
