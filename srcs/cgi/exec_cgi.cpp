@@ -102,6 +102,7 @@ static void parentRoutine(int pipefd[2], std::ostringstream & response, int & su
 
 void execCgi(const cgi_map & cgi, std::ostringstream & response, const std::string & _url, int & succes_code, const std::string & method)
 {
+    std::cout << RED << "url in cgi = " << _url << END << std::endl;
     if (cgi.empty())
     {
         succes_code = 500;

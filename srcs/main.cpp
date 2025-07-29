@@ -56,11 +56,14 @@ int main(int ac, char **av)
                         // }
                         if (clients[socket_fd].RequestIsComplete())
                         {
-                            clients[socket_fd].getRequest().parse_request(clients[socket_fd], servers[0]);
-                            epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp.getClientEpollStruct());
-                            close(socket_fd);
-                            clients.erase(socket_fd);
+                            if(clients[socket_fd].getRequest().parse_request(clients[socket_fd], servers[0]) == 0)
+                            {
+                                epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp.getClientEpollStruct());
+                                close(socket_fd);
+                                clients.erase(socket_fd);
+                            }
                         }
+                        // std::cout << "size = " << clients[socket_fd].getRequest().getRequest().size() << " get length = " << (size_t)atoi(clients[socket_fd].getRequest().get_content_length().c_str()) << std::endl;
                     }
                 }
             }

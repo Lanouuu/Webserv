@@ -53,8 +53,8 @@ int    read_request(client_map & clients, int const & socket_fd, int const & epo
         return readed;
     }
     // std::cout << "readed = " << readed << std::endl;
-    clients[socket_fd].getRequest().add_request(buf, sizeof(buf));
-    std::cout << buf << std::flush;
+    clients[socket_fd].getRequest().add_request(buf, readed);
+    // std::cout << buf << std::flush;
     return readed;
 }
 
