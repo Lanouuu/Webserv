@@ -388,6 +388,8 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     int (Request::*methodsTab[])(int &, Client const &, Server const &) = {&Request::get_request_handler, &Request::post_request_handler, &Request::delete_request_handler};
     (this->*methodsTab[get_request_type(_methode)])(succes_code, client, server);
+    if (get_file_type(_url) == "script")
+        return 0;
     response = create_response(succes_code, server);
     std::cout << "response : " << response.c_str() << std::endl;
     std::cout << _methode << " " << _url << std::endl;
@@ -397,13 +399,31 @@ int Request::parse_request(Client & client, Server const & server) {
     return 0;
 }
 
-int Request::get_request_handler(int & success_code, Client const & client, Server const & server)
+int Request::get_request_handler(int & succes_code, Client const & client, Server const & server)
 {
     (void)client;
-    (void)server;
-    success_code = 200;
+    succes_code = 200;
+    std::string response;
+    if(get_file_type(_url) == "script")
+    {
+        std::ostringstream temp;
+        execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+        if (succes_code == 404 || succes_code == 500)
+        {
+            if (succes_code == 404)
+                response = status_response_html(server, succes_code, "nofound");
+            else if (succes_code == 500)
+                response = status_response_html(server, succes_code, "ise");
+            send(client.getClientFd(), response.c_str(), response.length(), 0);
+            return 1;
+        }
+        response = temp.str();
+        send(client.getClientFd(), response.c_str(), response.length(), 0);
+        return (0);
+    }
     return 0;
 }
+
 int Request::set_methode(std::string const & line)
 {
     std::string read;
@@ -563,12 +583,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << "\r\n";
         response << html.str();
     }
-    else if(get_file_type(_url) == "script")
-    {
-        execCgi(cgi_temp, response, _url, succes_code, _methode);
-        if (succes_code == 500)
-            return (status_response_html(server, succes_code, "ise"));
-    }
     else
     {
         ss << file.rdbuf();
@@ -665,7 +679,7 @@ int Request::urlencoded_handler(Client const & client, Server const & server)
     int succes_code = 0;
     if(parse_body_form() == 1 && check_request_format_post() == 1)
         return request_error(server, client, 400, "badreq");
-    if(_url == "/srcs/cgi-bin/download.py")
+    if(get_file_type(_url) == "script")
     {
         std::ostringstream temp;
         execCgi(server.getCgi(), temp, _url, succes_code, _methode);

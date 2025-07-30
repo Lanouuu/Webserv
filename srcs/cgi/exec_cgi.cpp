@@ -31,10 +31,7 @@ static void childRoutine(const cgi_map & cgi, int pipefd[2], const std::string &
     close(pipefd[0]);
     close(pipefd[1]);
     std::string final_url;
-    if (method == "POST")
-        final_url = "." +_url;
-    else
-        final_url = _url;
+    final_url = "." +_url;
     char *argv[] = {
         (char *)bin.c_str(),
         (char *)final_url.c_str(),
@@ -96,6 +93,8 @@ static void parentRoutine(int pipefd[2], std::ostringstream & response, int & su
             response.write(buffer, count);
         close(pipefd[0]);
     }
+    if (response.str().empty())
+        succes_code = 500;
     return ;
 }
 
