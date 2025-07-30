@@ -66,11 +66,12 @@ class Request {
         int set_host(std::string const & line);
         int set_content_type(std::string const & line);
         int set_content_length(std::string const & line);
+        void set_content_length_begin(std::vector<char>::const_iterator it);
         int set_body();
         int parse_request(Client & client, Server const & server);
         int check_request_format_get(std::string const &req);
         int check_request_format_post();
-        int check_request_format_post_multi();
+        int check_request_format_post_multi(std::string &boundary);
         int get_request_handler(int & succes_code, Client const & client, Server const & server);
         int post_request_handler(int & success_code, Client const & client, Server const & server);
         int delete_request_handler(int & success_code, Client const & client, Server const & server);
