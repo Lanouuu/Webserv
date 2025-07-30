@@ -33,7 +33,7 @@ class   Server
         std::vector<std::string>    getNames(void) const;
         std::vector<std::string>    getIndexes(void) const;
         int const &                 getSocket(void) const;
-        size_t &                    getBodySize(void);
+        size_t                      getBodySize(void) const;
         cgi_map                     getCgi(void) const;
         const errpage_map           getErrPages(void) const;               
 

@@ -336,8 +336,16 @@ void Request::findLocation(const Server & server, const std::string url)
 {
     location_map    map_temp = server.getLocaMap();
     Location        loca_temp;
-    std::string     uri_str;    
+    std::string     uri_str;
 
+    if (_url[_url.length() - 1] != '/')
+    {
+        int status;
+        status = access(("." + _url).c_str(), F_OK);
+    
+        if (status == -1)
+            _url += "/";
+    }
     for (location_map::const_iterator it = map_temp.begin(); it != map_temp.end(); it++)
     {
         size_t pos = url.find((*it).first);
@@ -348,11 +356,12 @@ void Request::findLocation(const Server & server, const std::string url)
                 loca_temp = (*it).second;
                 uri_str = (*it).first;
             }
-            
+
         }
     }
-    _reqLocation = new Location(loca_temp);
-    return ;
+    if (!loca_temp.getBaseUri().empty())
+        _reqLocation = new Location(loca_temp);
+    return ;   
 }
 
 int Request::parse_request(Client & client, Server const & server) {
@@ -410,6 +419,27 @@ int Request::parse_request(Client & client, Server const & server) {
     }
     if((size_t)atoi(_content_length.c_str()) > _request.size() && _methode == "POST")
         return 1;
+    findLocation(server, _url);
+    // -> proteger ??????????????????????????????????????????
+    size_t rbody_size = (size_t)atoi(_content_length.c_str());
+    if (errno == ERANGE)
+        return request_error(server, client, 400, "badreq");
+    if (_reqLocation)
+    {
+        if (rbody_size > _reqLocation->getBodySize())
+        {
+            request_error(server, client, 400, "badreq");
+            return 0;
+        }
+    }
+    else
+    {
+        if (rbody_size > server.getBodySize())
+        {
+            request_error(server, client, 400, "badreq");
+            return 0;
+        }
+    }
     int (Request::*methodsTab[])(int &, Client const &, Server const &) = {&Request::get_request_handler, &Request::post_request_handler, &Request::delete_request_handler};
     (this->*methodsTab[get_request_type(_methode)])(succes_code, client, server);
     if (get_file_type(_url) == "script")
@@ -834,13 +864,13 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
     size_t boundary_pos = end - _body.begin();
     std::string keyword;
 
-    if(_url == "/create")
+    if(_url == "/create/")
         keyword = "Content-Disposition: form-data; name=\"filename\"";
-    if(_url == "/upload")
+    if(_url == "/upload/")
         keyword = "Content-Disposition: form-data; name=\"filename\"; filename=\"";
 
     begin = std::search(line.begin(), line.end(), keyword.begin(), keyword.end());
-    if (begin != line.end() && _url == "/upload")
+    if (begin != line.end() && _url == "/upload/")
     {
         std::vector<char>::iterator filename_start = begin + keyword.size();
         std::vector<char>::iterator filename_end = std::find(filename_start, line.end(), '"');
@@ -895,7 +925,7 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
         request_error(server, client, 201, "crok");
         return 0;
     }
-    else if (begin != line.end() && _url == "/create")
+    else if (begin != line.end() && _url == "/create/")
     {
         std::vector<char>::iterator filename_start = begin + keyword.size() + 4;
         filename.assign(filename_start, line.end()- 2);

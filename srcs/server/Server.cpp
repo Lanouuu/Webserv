@@ -85,7 +85,7 @@ int const & Server::getSocket(void) const
     return (this->_serverSocket);
 }  
 
-size_t &    Server::getBodySize(void)
+size_t    Server::getBodySize(void) const
 {
     return (this->_serverBodySize);
 }
