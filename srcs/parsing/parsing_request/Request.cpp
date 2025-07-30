@@ -217,26 +217,18 @@ int Request::check_request_format_post() {
 
 int Request::check_request_format_post_multi(std::string &boundary) {
     std::cout << std::endl;
-    std::cout << "_request lenght = " << _request.size() << std::endl;
     const std::string rnrn = "\r\n\r\n";
     std::string clean_boundary = boundary;
     while (!clean_boundary.empty() && (clean_boundary[clean_boundary.size() - 1] == '\r' || clean_boundary[clean_boundary.size() - 1] == '\n'))
         clean_boundary.erase(clean_boundary.size() - 1);
 
     std::string end_boundary = clean_boundary + "--";
-    std::cout << RED << "end_boundary in check req = \n" << end_boundary << END << std::endl;
     std::vector<char>::iterator headers_end = std::search(_request.begin(), _request.end(),rnrn.begin(), rnrn.end());
-    if (headers_end == _request.end()) {
-        std::cerr << "ICI 199 - Pas de double CRLF trouvé" << std::endl;
+    if (headers_end == _request.end())
         return 1;
-    }
-
     std::vector<char>::iterator boundary_pos = std::search(headers_end, _request.end(),end_boundary.begin(), end_boundary.end());
-    if (boundary_pos == _request.end()) {
-        std::cerr << RED << "ICI 208 - Boundary de fin introuvable" << END << std::endl;
+    if (boundary_pos == _request.end())
         return 1;
-    }
-
     std::cout << "format post multi ok" << std::endl;
     return 0;
 }
@@ -397,17 +389,11 @@ int Request::parse_request(Client & client, Server const & server) {
                     if (word == methods[i])
                     {
                         if ((this->*funct[i])(line) == 1)
-                        {
-                            std::cout << RED << "ICI 377" << END << std::endl;
                             return request_error(server, client, 400, "badreq");
-                        }
                         break ;
                     }
                     else if(i == sizeof(methods) / sizeof(methods[0]) && word != methods[sizeof(methods) / sizeof(methods[0])])
-                    {
-                        std::cout << RED << "ICI 384" << END << std::endl;
                         return request_error(server, client, 400, "badreq");
-                    }    
                             
                 }
                 word.clear();
@@ -422,17 +408,12 @@ int Request::parse_request(Client & client, Server const & server) {
             break;
         }
     }
-    std::cout << "content length = " << (size_t)atoi(_content_length.c_str()) << std::endl;
-
-    std::cout << "request.size() = " << _request.size() << std::endl;
     if((size_t)atoi(_content_length.c_str()) > _request.size() && _methode == "POST")
-    {
-        std::cout << RED << "dans le if" << END << std::endl;
         return 1;
-    }
-    std::cout << "continue apres le if" << std::endl;
     int (Request::*methodsTab[])(int &, Client const &, Server const &) = {&Request::get_request_handler, &Request::post_request_handler, &Request::delete_request_handler};
     (this->*methodsTab[get_request_type(_methode)])(succes_code, client, server);
+    if (get_file_type(_url) == "script")
+        return 0;
     response = create_response(succes_code, server);
     // std::cout << "response : " << response.c_str() << std::endl;
     std::cout << _methode << " " << _url << std::endl;
@@ -442,13 +423,31 @@ int Request::parse_request(Client & client, Server const & server) {
     return 0;
 }
 
-int Request::get_request_handler(int & success_code, Client const & client, Server const & server)
+int Request::get_request_handler(int & succes_code, Client const & client, Server const & server)
 {
     (void)client;
-    (void)server;
-    success_code = 200;
+    succes_code = 200;
+    std::string response;
+    if(get_file_type(_url) == "script")
+    {
+        std::ostringstream temp;
+        execCgi(server.getCgi(), temp, _url, succes_code, _methode);
+        if (succes_code == 404 || succes_code == 500)
+        {
+            if (succes_code == 404)
+                response = status_response_html(server, succes_code, "nofound");
+            else if (succes_code == 500)
+                response = status_response_html(server, succes_code, "ise");
+            send(client.getClientFd(), response.c_str(), response.length(), 0);
+            return 1;
+        }
+        response = temp.str();
+        send(client.getClientFd(), response.c_str(), response.length(), 0);
+        return (0);
+    }
     return 0;
 }
+
 int Request::set_methode(std::string const & line)
 {
     std::string read;
@@ -474,14 +473,10 @@ int Request::set_methode(std::string const & line)
         }
         else if (*it == '\r' && _http_version.empty())
         {
-            std::cout << RED << "read = " << read << END << std::endl;
             if(read == "HTTP/1.1") 
                 _http_version = read;
             else
-            {
-                std::cout << RED << "ICI 456" << END << std::endl;
                 return 1;
-            }
             read.clear();
         }
         read += *it;
@@ -615,12 +610,6 @@ std::string Request::create_response(int succes_code, Server const & server) {
         response << "\r\n";
         response << html.str();
     }
-    else if(get_file_type(_url) == "script")
-    {
-        execCgi(cgi_temp, response, _url, succes_code, _methode);
-        if (succes_code == 500)
-            return (status_response_html(server, succes_code, "ise"));
-    }
     else
     {
         ss << file.rdbuf();
@@ -717,7 +706,7 @@ int Request::urlencoded_handler(Client const & client, Server const & server)
     int succes_code = 0;
     if(parse_body_form() == 1 && check_request_format_post() == 1)
         return request_error(server, client, 400, "badreq");
-    if(_url == "/srcs/cgi-bin/download.py")
+    if(get_file_type(_url) == "script")
     {
         std::ostringstream temp;
         execCgi(server.getCgi(), temp, _url, succes_code, _methode);
@@ -818,26 +807,14 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
     std::string boundary = "--";
     size_t pos = _content_type.find("boundary=", 0);
     if (pos == std::numeric_limits<size_t>::max())
-    {
-        std::cout << RED << "ICI 770" << END << std::endl;
         return request_error(server, client, 400, "badreq");
-    }
     boundary += _content_type.substr(pos + 9);
     if(check_request_format_post_multi(boundary) == 1)
-    {
-        std::cout << RED << "ICI 782" << END << std::endl;
         return request_error(server, client, 400, "badreq");
-    }
     //1er boundary trouve
-    std::ofstream body_file("body_file");
-    for(std::vector<char>::iterator it = _body.begin(); it != _body.end(); it++)
-        body_file << *it;
     std::vector<char>::iterator begin = std::search(_body.begin(), _body.end(), boundary.c_str(), boundary.c_str() + boundary.size());
     if (begin == _body.end())
-    {
-        std::cout << RED << "ICI 777" << END << std::endl;
         return request_error(server, client, 400, "badreq");
-    }
     begin += boundary.size();
     if (std::distance(begin, _body.end()) >= 2 && *begin == '\r' && *(begin + 1) == '\n')
         begin += 2;
@@ -848,17 +825,12 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
     std::vector<char>::iterator end = std::search(begin, _body.end(),boundary.begin(), boundary.end());
     if (end == _body.end())
     {
-        std::cout << "dans if body.end()" << std::endl;
         end = std::search(begin, _body.end(), end_boundary.begin(), end_boundary.end());
         if (end == _body.end())
-        {
-            std::cout << RED << "ICI 792" << END << std::endl;
             return request_error(server, client, 400, "badreq");
-        }
     }
 
     std::vector<char> line(begin,end);
-    std::cout << "line size = " << line.size() << std::endl;
     size_t boundary_pos = end - _body.begin();
     std::string keyword;
 
@@ -870,17 +842,13 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
     begin = std::search(line.begin(), line.end(), keyword.begin(), keyword.end());
     if (begin != line.end() && _url == "/upload")
     {
-        std::cout << RED << "ICI 800" << END << std::endl;
         std::vector<char>::iterator filename_start = begin + keyword.size();
         std::vector<char>::iterator filename_end = std::find(filename_start, line.end(), '"');
 
         if (filename_end != line.end())
             filename.assign(filename_start, filename_end);
         else
-        {
-            std::cerr << RED << "ICI 807" << END << std::endl;
             return request_error(server, client, 400, "badreq");
-        }
         const char keyword2[] = {"Content-Type:"}; 
         begin = std::search(line.begin(), line.end(), keyword2, keyword2 + sizeof(keyword2) - 1);
         if (begin != line.end())
@@ -889,17 +857,11 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
                 content_type += *it;
         }
         else
-        {
-            std::cerr << RED << "ICI 819" << END << std::endl;
             return request_error(server, client, 400, "badreq");
-        }
         const char header_end_seq[] = {'\r','\n','\r','\n'};
         std::vector<char>::iterator body_start = std::search(begin, line.end(), header_end_seq, header_end_seq + 4);
         if(body_start == line.end())
-        {
-            std::cerr << RED << "ICI 826" << END << std::endl;
             return request_error(server, client, 400, "badreq");
-        }
         body_start += 4;
         std::vector<char> content_upload(body_start, line.end());
         std::ifstream test_open_file(("./www/upload/" + filename).c_str());
@@ -926,13 +888,9 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
         std::ofstream new_file;
         new_file.open(("./www/upload/" + filename).c_str(), std::ofstream::out | std::ios::binary);
         if(!new_file)
-        {
-            std::cerr << RED << "ICI 856" << END << std::endl;
             return request_error(server, client, 500, "ise");
-        }
-        if (!content_upload.empty()) {
+        if (!content_upload.empty())
             new_file.write(&content_upload[0], content_upload.size());
-        }
         new_file.close();
         request_error(server, client, 201, "crok");
         return 0;
@@ -1007,22 +965,18 @@ int Request::multipart_formData_handler(Client const & client, Server const & se
 
 int  Request::post_request_handler(int & success_code, Client const & client, Server const & server)
 {
-    if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || _body.empty() == true)
+    if(_host.empty() == true || _content_length.empty() == true || _content_type.empty() == true || (_body.empty() == true && _url == "/upload"))
         return 1;
     std::cout << "_content length = [" << _content_length << "]" << std::endl;
     for(std::string::const_iterator it = _content_length.begin(); it != _content_length.end() - 1; it++)
     {
         if(!isdigit(*it))
-        {
-            std::cout << RED << "ICI 990" << END << std::endl;
             return request_error(server, client, 400, "badreq");
-        }
     }
 
     int i = 0;
     std::string types[] = {"application/x-www-form-urlencoded\r", "text/plain\r", "multipart/form-data"};
     int (Request::*PostRequestsHandler[])(Client const &, Server const &) = {&Request::urlencoded_handler, &Request::textPlain_Handler, &Request::multipart_formData_handler};
-    std::cout << "COntent type = " << _content_type << std::endl;
     for (; i < 3; i++)
     {
         if (_content_type.find(types[i], 0) != std::numeric_limits<size_t>::max())
@@ -1035,10 +989,7 @@ int  Request::post_request_handler(int & success_code, Client const & client, Se
             return code;
     }
     else
-    {
-        std::cout << RED << "ICI 969" << END << std::endl;
         return 415;
-    }
     success_code = 201;
     return 0;
 }
@@ -1052,9 +1003,7 @@ int Request::delete_request_handler(int & success_code, Client const & client, S
     {
         std::remove(_url.c_str());
         if (std::ifstream(_url.c_str()))
-        {
             std::cout << "Error, file could no be deleted" << std::endl;
-        }
         success_code = 204;
     }
     else

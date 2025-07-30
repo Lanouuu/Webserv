@@ -46,7 +46,6 @@ int    read_request(client_map & clients, int const & socket_fd, int const & epo
     readed = recv(socket_fd, buf, 4098, 0);
     if (readed <= 0)
     {
-        std::cout << "ICI" << std::endl;
         epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, NULL);
         close(socket_fd);
         clients.erase(socket_fd);

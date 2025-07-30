@@ -72,7 +72,7 @@ class Request {
         int check_request_format_get(std::string const &req);
         int check_request_format_post();
         int check_request_format_post_multi(std::string &boundary);
-        int get_request_handler(int & success_code, Client const & client, Server const & server);
+        int get_request_handler(int & succes_code, Client const & client, Server const & server);
         int post_request_handler(int & success_code, Client const & client, Server const & server);
         int delete_request_handler(int & success_code, Client const & client, Server const & server);
         int get_request_type(std::string const & method) const;
